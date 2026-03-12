@@ -1,20 +1,14 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
 public class Main {
     public static void main(String[] args) {
-        //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-        // to see how IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
-        System.out.printf("Testing");
-        System.out.printf("Last testing");
-        System.out.printf("Last testing");
-        
-        for (int i = 1; i <= 5; i++) {
-            //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-            // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-            System.out.println("i = " + i);
-           
-        }
-        System.out.println("Done!");
+        Characters objCharacters1 = new Characters("Tyron(Energy Sentinel)", 500, 200);
+        Characters objCharacters2 = new Characters("Lance(Light Bringer)", 520, 200);
+        Characters objCharacters3 = new Characters("Adrian(Abyssal Blade)", 500, 180);
+        Characters objCharacters4 = new Characters("Clark(Kyuoka Blade Dance)", 500, 220);
+        Characters objCharacters5 = new Characters("Raze(Inferno Berserker)", 520, 160);
+        Characters objCharacters6 = new Characters("Marie(Arcane Tempest)", 500, 200);
+        Characters objCharacters7 = new Characters("Alyana(Radiant Aegis)", 500, 220);
+        Characters objCharacters8 = new Characters("Katarina(Shadow Dominator)", 480, 200);
+       
     }
+        
 }
