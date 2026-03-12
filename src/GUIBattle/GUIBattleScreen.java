@@ -5,116 +5,140 @@ import java.awt.*;
 import java.util.Random;
 import Models.Characters;
 import Models.Skills;
+import Data.CharacterRegistry;
+import Logic.BattleLogic;
 
 public class GUIBattleScreen extends JFrame {
     private Characters player, computer;
-    private JLabel pStats, cStats;
+    private JLabel pStats, cStats, pSprite, cSprite;
+    private JPanel actionPanel;
     private Random rand = new Random();
+    private boolean isAnimating = false;
 
     public GUIBattleScreen(Characters selected) {
         this.player = selected;
-        this.computer = generateRandomEnemy(selected.getName());
+        this.computer = generateAI();
+        initUI();
+    }
+
+    private void initUI() {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setResizable(false);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setupTopStats();
-        setupActionPanel();
-    }
+        getContentPane().setBackground(new Color(20, 20, 20));
 
-    private void setupTopStats() {
-        JPanel statsPanel = new JPanel(new GridLayout(1, 2));
-        statsPanel.setBackground(Color.BLACK);
-        pStats = new JLabel(formatStats(player));
-        pStats.setFont(new Font("Arial", Font.BOLD, 22));
-        cStats = new JLabel(formatStats(computer), SwingConstants.RIGHT);
-        cStats.setFont(new Font("Arial", Font.BOLD, 22));
-        statsPanel.add(pStats);
-        statsPanel.add(cStats);
-        add(statsPanel, BorderLayout.NORTH);
-    }
+        JPanel header = new JPanel(new GridLayout(1, 2));
+        header.setBackground(Color.BLACK);
+        header.setPreferredSize(new Dimension(0, 150));
+        pStats = new JLabel();
+        cStats = new JLabel("", SwingConstants.RIGHT);
+        pStats.setFont(new Font("Monospaced", Font.BOLD, 26));
+        cStats.setFont(new Font("Monospaced", Font.BOLD, 26));
+        header.add(pStats); header.add(cStats);
+        add(header, BorderLayout.NORTH);
 
-    private void setupActionPanel() {
-        JPanel actionPanel = new JPanel(new FlowLayout());
-        actionPanel.setBackground(Color.DARK_GRAY);
-        for (Skills skill : player.getSkills()) {
-            JButton btn = new JButton("<html>" + skill.getSkillName() + "<br>" + skill.getManaCost() + " MP</html>");
-            btn.setPreferredSize(new Dimension(200, 80));
-            btn.addActionListener(e -> playerTurn(skill));
-            actionPanel.add(btn);
-        }
-        JButton restBtn = new JButton("REST");
-        restBtn.setPreferredSize(new Dimension(200, 80));
-        restBtn.addActionListener(e -> restAction());
-        actionPanel.add(restBtn);
+        JPanel arena = new JPanel(new GridLayout(1, 2));
+        arena.setOpaque(false);
+        pSprite = new JLabel("", SwingConstants.CENTER);
+        cSprite = new JLabel("", SwingConstants.CENTER);
+        pSprite.setVerticalAlignment(SwingConstants.BOTTOM);
+        cSprite.setVerticalAlignment(SwingConstants.BOTTOM);
+        arena.add(pSprite); arena.add(cSprite);
+        add(arena, BorderLayout.CENTER);
+
+        actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
+        actionPanel.setBackground(new Color(30, 30, 30));
+        actionPanel.setPreferredSize(new Dimension(0, 200));
+        setupButtons();
         add(actionPanel, BorderLayout.SOUTH);
+
+        refresh();
+        setGIF(pSprite, player.getName(), "idle");
+        setGIF(cSprite, computer.getName(), "idle");
     }
 
-    private void playerTurn(Skills skill) {
-        if (player.getMana() >= skill.getManaCost()) {
-            player.setMana(player.getMana() - skill.getManaCost());
-            int damage = rand.nextInt((skill.getMaxDamage() - skill.getMinDamage()) + 1) + skill.getMinDamage();
-            computer.setHp(Math.max(0, computer.getHp() - damage));
-            updateUI();
-            JOptionPane.showMessageDialog(this, player.getName() + " hits for " + damage + "!");
-            if (checkGameOver()) return;
-            computerTurn();
-        } else {
-            JOptionPane.showMessageDialog(this, "Not enough Mana!");
+    private void setupButtons() {
+        actionPanel.removeAll();
+        for (Skills s : player.getSkills()) {
+            JButton b = new JButton("<html><center><font color='white'><b>" + s.getSkillName() + "</b></font><br>"
+                    + "<font color='#00FFFF'>" + s.getManaCost() + " MANA</font><br>"
+                    + "<font size='3' color='#BBBBBB'>" + getSkillDesc(s.getSkillName()) + "</font></center></html>");
+            b.setPreferredSize(new Dimension(280, 130));
+            b.setBackground(new Color(55, 55, 55));
+            b.addActionListener(e -> playerTurn(s));
+            actionPanel.add(b);
         }
+        JButton rest = new JButton("<html><center><font color='white'><b>REST</b></font><br><font color='#FFCC00'>Gain Extra Mana</font></center></html>");
+        rest.setPreferredSize(new Dimension(200, 130));
+        rest.setBackground(new Color(100, 70, 20));
+        rest.addActionListener(e -> { if (!isAnimating) { player.setMana(player.getMana() + (player.getManaPerTurn() * 2)); refresh(); computerTurn(); } });
+        actionPanel.add(rest);
     }
 
-    private void restAction() {
-        player.setMana(Math.min(player.getMaxMana(), player.getMana() + (player.getManaPerTurn() * 2)));
-        updateUI();
-        JOptionPane.showMessageDialog(this, "Resting... Mana restored!");
-        computerTurn();
+    private void playerTurn(Skills s) {
+        if (isAnimating || player.getMana() < s.getManaCost()) return;
+        isAnimating = true; toggleButtons(false);
+        int idx = 1;
+        for (int i = 0; i < player.getSkills().length; i++) if (player.getSkills()[i] == s) idx = i + 1;
+        setGIF(pSprite, player.getName(), "skill" + idx);
+
+        new Timer(1200, e -> {
+            player.setMana(player.getMana() - s.getManaCost());
+            int dmg = BattleLogic.calculateDamage(player, computer, s);
+            BattleLogic.processEffects(s, player, computer, dmg);
+            setGIF(cSprite, computer.getName(), "gothit");
+            refresh();
+            new Timer(800, e2 -> {
+                setGIF(pSprite, player.getName(), "idle");
+                if (computer.getHp() <= 0) finalizeDuel("VICTORY", cSprite, computer.getName());
+                else { setGIF(cSprite, computer.getName(), "idle"); computerTurn(); }
+                ((Timer)e2.getSource()).stop();
+            }).start();
+            ((Timer)e.getSource()).stop();
+        }).start();
     }
 
     private void computerTurn() {
-        computer.setMana(Math.min(computer.getMaxMana(), computer.getMana() + computer.getManaPerTurn()));
-        Skills s = computer.getSkills()[rand.nextInt(3)];
-        int d = rand.nextInt((s.getMaxDamage() - s.getMinDamage()) + 1) + s.getMinDamage();
-        player.setHp(Math.max(0, player.getHp() - d));
-        updateUI();
-        JOptionPane.showMessageDialog(this, computer.getName() + " attacks for " + d + "!");
-        if (checkGameOver()) return;
-        player.setMana(Math.min(player.getMaxMana(), player.getMana() + player.getManaPerTurn()));
-        updateUI();
+        computer.setMana(computer.getMana() + computer.getManaPerTurn());
+        refresh();
+        int idx = rand.nextInt(3); Skills s = computer.getSkills()[idx];
+        if (computer.getMana() >= s.getManaCost()) {
+            isAnimating = true;
+            setGIF(cSprite, computer.getName(), "skill" + (idx + 1));
+            new Timer(1200, e -> {
+                computer.setMana(computer.getMana() - s.getManaCost());
+                int dmg = BattleLogic.calculateDamage(computer, player, s);
+                BattleLogic.processEffects(s, computer, player, dmg);
+                setGIF(pSprite, player.getName(), "gothit");
+                refresh();
+                new Timer(800, e2 -> {
+                    setGIF(cSprite, computer.getName(), "idle");
+                    if (player.getHp() <= 0) finalizeDuel("DEFEAT", pSprite, player.getName());
+                    else { setGIF(pSprite, player.getName(), "idle"); player.setMana(player.getMana() + player.getManaPerTurn()); refresh(); isAnimating = false; toggleButtons(true); }
+                    ((Timer)e2.getSource()).stop();
+                }).start();
+                ((Timer)e.getSource()).stop();
+            }).start();
+        } else { isAnimating = false; toggleButtons(true); }
     }
 
-    private boolean checkGameOver() {
-        if (computer.getHp() <= 0) { JOptionPane.showMessageDialog(this, "Victory!"); dispose(); return true; }
-        if (player.getHp() <= 0) { JOptionPane.showMessageDialog(this, "Defeat!"); dispose(); return true; }
-        return false;
+    private void finalizeDuel(String msg, JLabel sprite, String name) {
+        setGIF(sprite, name, "defeat");
+        new Timer(2000, e -> { JOptionPane.showMessageDialog(this, msg); dispose(); ((Timer)e.getSource()).stop(); }).start();
     }
 
-    private void updateUI() {
-        pStats.setText(formatStats(player));
-        cStats.setText(formatStats(computer));
+    private void setGIF(JLabel l, String n, String a) {
+        java.net.URL url = getClass().getResource("/resources/" + n + "_" + a + ".gif");
+        if (url != null) { l.setIcon(new ImageIcon(url)); l.setText(""); }
+        else { l.setIcon(null); l.setText("<html><font color='white'>" + n + " (" + a + ")</font></html>"); }
     }
 
-    private String formatStats(Characters c) {
-        return "<html><font color='white'>" + c.getName() + "<br>HP: " + c.getHp() + "<br>MP: " + c.getMana() + "</font></html>";
+    private void refresh() {
+        pStats.setText(String.format("<html><font color='white'>&nbsp;%s<br><font color='#FF4444'>HP: %d/%d</font><br><font color='#44FFFF'>MANA: %d/%d</font></font></html>", player.getName(), player.getHp(), player.getMaxHp(), player.getMana(), player.getMaxMana()));
+        cStats.setText(String.format("<html><font color='white'>%s&nbsp;<br><font color='#FF4444'>HP: %d/%d</font>&nbsp;<br><font color='#44FFFF'>MANA: %d/%d</font>&nbsp;</font></html>", computer.getName(), computer.getHp(), computer.getMaxHp(), computer.getMana(), computer.getMaxMana()));
     }
 
-    private Characters generateRandomEnemy(String pName) {
-        String[] ns = {"Tyron", "Lance", "Adrian", "Clark", "Raze", "Marie", "Alyana", "Katarina"};
-        String eN; do { eN = ns[rand.nextInt(ns.length)]; } while (eN.equals(pName));
-        return getEnemyStats(eN);
-    }
-
-    private Characters getEnemyStats(String n) {
-        switch (n) {
-            case "Tyron": return new Characters("Tyron", "Energy Sentinel", 500, 200, 15, new Skills[]{new Skills("Precision Strike", 25, 35, 55), new Skills("Energy Guard", 40, 0, 0), new Skills("Overdrive Pulse", 60, 75, 105)});
-            case "Lance": return new Characters("Lance", "Light Bringer", 520, 200, 20, new Skills[]{new Skills("Holy Nova Smash", 25, 35, 55), new Skills("Light Pillar", 35, 0, 0), new Skills("Supernova Strike", 65, 80, 110)});
-            case "Adrian": return new Characters("Adrian", "Abyssal Blade", 500, 180, 15, new Skills[]{new Skills("Abyss Slash", 25, 40, 60), new Skills("Void Rend", 35, 65, 95), new Skills("Oblivion Edge", 55, 90, 120)});
-            case "Clark": return new Characters("Clark", "Kyuoka Blade Dance", 500, 220, 20, new Skills[]{new Skills("Elemental Strike", 25, 35, 55), new Skills("Elemental Burst", 50, 70, 100), new Skills("Hydro Guard", 40, 0, 0)});
-            case "Raze": return new Characters("Raze", "Inferno Berserker", 520, 160, 10, new Skills[]{new Skills("Flame Cleave", 25, 45, 70), new Skills("Scorch Rush", 35, 70, 100), new Skills("Cataclysm Blaze", 60, 95, 125)});
-            case "Marie": return new Characters("Marie", "Arcane Tempest", 500, 200, 15, new Skills[]{new Skills("Arcane Bolt", 25, 40, 60), new Skills("Mana Burn", 35, 45, 65), new Skills("Tempest Surge", 60, 80, 110)});
-            case "Alyana": return new Characters("Alyana", "Radiant Aegis", 500, 220, 20, new Skills[]{new Skills("Light Spear", 25, 40, 65), new Skills("Radiant Blessing", 40, 0, 0), new Skills("Divine Retribution", 60, 75, 105)});
-            case "Katarina": return new Characters("Katarina", "Shadow Dominator", 480, 200, 15, new Skills[]{new Skills("Shadow Slash", 25, 45, 70), new Skills("Dark Surge", 40, 70, 100), new Skills("Soul Reaver", 60, 90, 120)});
-            default: return null;
-        }
-    }
+    private void toggleButtons(boolean s) { for (Component c : actionPanel.getComponents()) c.setEnabled(s); }
+    private String getSkillDesc(String n) { switch(n){ case "Energy Guard": return "Shield -45%"; case "Light Pillar": return "Blind -40%"; case "Radiant Blessing": return "Heal HP"; case "Mana Burn": return "Burn 20 Mana"; case "Soul Reaver": return "30% Lifesteal"; case "Divine Retribution": return "25% Lifesteal"; default: return "Balanced DMG"; } }
+    private Characters generateAI() { String[] ns = CharacterRegistry.getAllNames(); String n; do { n = ns[rand.nextInt(ns.length)]; } while (n.equals(player.getName())); return CharacterRegistry.getCharacter(n); }
 }

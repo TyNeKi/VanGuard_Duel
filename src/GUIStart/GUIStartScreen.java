@@ -1,90 +1,95 @@
 package GUIStart;
 
-import GUIChooseChar.GUICharacterSelection;
-
+import GUIChooseChar.GUICharacterSelection; // Crucial import
 import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 
-public class GUIStartScreen extends javax.swing.JFrame {
+public class GUIStartScreen extends JFrame {
 
     public GUIStartScreen() {
-        initComponents();
+        setTitle("VanGuard Duel - Main Menu");
         this.setExtendedState(JFrame.MAXIMIZED_BOTH);
         this.setResizable(false);
-        this.getContentPane().setLayout(new GridBagLayout());
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // Use a background panel or direct layout
+        this.getContentPane().setBackground(new Color(20, 20, 20));
+        this.setLayout(new GridBagLayout());
+
         setupCenteredUI();
     }
 
     private void setupCenteredUI() {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.insets = new Insets(20, 10, 20, 10);
+        gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Using ClassLoader to look at the root of the project
-        URL imgURL = Thread.currentThread().getContextClassLoader().getResource("resources/titleGameMainMenu.png");
+        // 1. Game Title Image
+        URL imgURL = getClass().getResource("/resources/titleGameMainMenu.png");
         JLabel titleLabel;
 
         if (imgURL != null) {
             titleLabel = new JLabel(new ImageIcon(imgURL));
         } else {
-            titleLabel = new JLabel("IMAGE NOT FOUND");
-            titleLabel.setFont(new Font("Arial", Font.BOLD, 40));
-            titleLabel.setForeground(Color.RED);
+            titleLabel = new JLabel("VANGUARD DUEL");
+            titleLabel.setFont(new Font("Serif", Font.BOLD, 60));
+            titleLabel.setForeground(Color.WHITE);
         }
-
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 0;
         this.add(titleLabel, gbc);
 
+        // 2. VS Computer Button
         JButton vsCompBtn = new JButton("Vs Computer");
-        vsCompBtn.setPreferredSize(new Dimension(250, 60));
-        vsCompBtn.setFont(new Font("Arial", Font.PLAIN, 20));
+        vsCompBtn.setPreferredSize(new Dimension(300, 70));
+        vsCompBtn.setFont(new Font("Arial", Font.BOLD, 24));
+        vsCompBtn.setFocusPainted(false);
+        vsCompBtn.setBackground(new Color(50, 50, 50));
+        vsCompBtn.setForeground(Color.WHITE);
 
         vsCompBtn.addActionListener(e -> {
-            GUICharacterSelection selectionScreen = new GUICharacterSelection();
-            selectionScreen.setVisible(true);
-            dispose();
+            System.out.println("DEBUG: Vs Computer clicked. Transitioning...");
+            try {
+                // Initialize the next screen
+                GUICharacterSelection selectionScreen = new GUICharacterSelection();
+                selectionScreen.setVisible(true);
+
+                // Close this screen
+                this.dispose();
+            } catch (Exception ex) {
+                System.err.println("CRASH DETECTED: Could not open Selection Screen.");
+                ex.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
+            }
         });
 
         gbc.gridy = 1;
         this.add(vsCompBtn, gbc);
 
-        JButton exitBtn = new JButton("Exit");
-        exitBtn.setPreferredSize(new Dimension(250, 60));
-        exitBtn.setFont(new Font("Arial", Font.PLAIN, 20));
-        gbc.gridy = 2;
+        // 3. Exit Button
+        JButton exitBtn = new JButton("Exit Game");
+        exitBtn.setPreferredSize(new Dimension(300, 70));
+        exitBtn.setFont(new Font("Arial", Font.BOLD, 24));
+        exitBtn.setFocusPainted(false);
+        exitBtn.setBackground(new Color(150, 0, 0));
+        exitBtn.setForeground(Color.WHITE);
+
         exitBtn.addActionListener(e -> System.exit(0));
+
+        gbc.gridy = 2;
         this.add(exitBtn, gbc);
     }
 
-    private void initComponents() {
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 800, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGap(0, 500, Short.MAX_VALUE)
-        );
-        pack();
-    }
-
-    public static void main(String args[]) {
+    public static void main(String[] args) {
+        // Set Look and Feel to match the system
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(GUIStartScreen.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        java.awt.EventQueue.invokeLater(() -> new GUIStartScreen().setVisible(true));
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignored) {}
+
+        java.awt.EventQueue.invokeLater(() -> {
+            new GUIStartScreen().setVisible(true);
+        });
     }
 }
