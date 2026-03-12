@@ -8,6 +8,8 @@ public class Main {
         Characters objCharacters6 = new Characters("Marie(Arcane Tempest)", 500, 200);
         Characters objCharacters7 = new Characters("Alyana(Radiant Aegis)", 500, 220);
         Characters objCharacters8 = new Characters("Katarina(Shadow Dominator)", 480, 200);
+        
+        System.out.println();
        
     }
         
