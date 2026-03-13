@@ -87,6 +87,7 @@ public class GUIStartScreen extends JFrame {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}
 
+
         java.awt.EventQueue.invokeLater(() -> {
             new GUIStartScreen().setVisible(true);
         });
