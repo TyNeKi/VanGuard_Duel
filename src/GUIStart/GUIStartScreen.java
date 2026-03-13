@@ -13,9 +13,23 @@ public class GUIStartScreen extends JFrame {
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        JPanel backgroundPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                URL bgURL = getClass().getResource("/resources/Background Vanguard.png");
+                if (bgURL != null) {
+                    Image img = new ImageIcon(bgURL).getImage();
+                    g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+                } else {
+                    g.setColor(new Color(153, 101, 21));
+                    g.fillRect(0, 0, getWidth(), getHeight());
+                }
+            }
+        };
 
-        this.getContentPane().setBackground(new Color(20, 20, 20));
-        this.setLayout(new GridBagLayout());
+        backgroundPanel.setLayout(new GridBagLayout());
+        this.setContentPane(backgroundPanel);
 
         setupCenteredUI();
     }
