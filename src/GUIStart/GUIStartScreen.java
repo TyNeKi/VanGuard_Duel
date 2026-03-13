@@ -13,7 +13,7 @@ public class GUIStartScreen extends JFrame {
         this.setResizable(false);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        // Use a background panel or direct layout
+
         this.getContentPane().setBackground(new Color(20, 20, 20));
         this.setLayout(new GridBagLayout());
 
@@ -26,7 +26,7 @@ public class GUIStartScreen extends JFrame {
         gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // 1. Game Title Image
+
         URL imgURL = getClass().getResource("/resources/titleGameMainMenu.png");
         JLabel titleLabel;
 
@@ -47,12 +47,12 @@ public class GUIStartScreen extends JFrame {
         vsCompBtn.setFont(new Font("Arial", Font.BOLD, 24));
         vsCompBtn.setFocusPainted(false);
         vsCompBtn.setBackground(new Color(50, 50, 50));
-        vsCompBtn.setForeground(Color.WHITE);
+        vsCompBtn.setForeground(Color.BLACK);
 
         vsCompBtn.addActionListener(e -> {
             System.out.println("DEBUG: Vs Computer clicked. Transitioning...");
             try {
-                // Initialize the next screen
+
                 GUICharacterSelection selectionScreen = new GUICharacterSelection();
                 selectionScreen.setVisible(true);
 
@@ -74,7 +74,7 @@ public class GUIStartScreen extends JFrame {
         exitBtn.setFont(new Font("Arial", Font.BOLD, 24));
         exitBtn.setFocusPainted(false);
         exitBtn.setBackground(new Color(150, 0, 0));
-        exitBtn.setForeground(Color.WHITE);
+        exitBtn.setForeground(Color.BLACK);
 
         exitBtn.addActionListener(e -> System.exit(0));
 
@@ -83,7 +83,6 @@ public class GUIStartScreen extends JFrame {
     }
 
     public static void main(String[] args) {
-        // Set Look and Feel to match the system
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignored) {}

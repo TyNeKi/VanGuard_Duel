@@ -2,9 +2,7 @@ package Models;
 
 public class Skills {
     private String skillName;
-    private int manaCost;
-    private int minDamage;
-    private int maxDamage;
+    private int manaCost, minDamage, maxDamage;
 
     public Skills(String skillName, int manaCost, int minDamage, int maxDamage) {
         this.skillName = skillName;
@@ -13,8 +11,16 @@ public class Skills {
         this.maxDamage = maxDamage;
     }
 
-    public String getSkillName() { return skillName; }
-    public int getManaCost() { return manaCost; }
-    public int getMinDamage() { return minDamage; }
-    public int getMaxDamage() { return maxDamage; }
+    public String getSkillName() {
+        return skillName;
+    }
+    public int getManaCost() {
+        return manaCost;
+    }
+    public int getMinDamage() {
+        return minDamage;
+    }
+    public int getMaxDamage() {
+        return maxDamage;
+    }
 }
