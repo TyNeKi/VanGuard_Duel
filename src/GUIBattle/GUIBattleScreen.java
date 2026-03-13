@@ -9,11 +9,11 @@ import Data.CharacterRegistry;
 import Logic.BattleLogic;
 
 public class GUIBattleScreen extends JFrame {
-    final private Characters player, enemy;
+    private Characters player, enemy;
     private JLabel pStats, eStats, pSprite, eSprite;
-    private JPanel actionPanel;
+    private JPanel actionPanel, arena;
     private boolean isBusy = false;
-    final  private Random rand = new Random();
+    private final Random rand = new Random();
 
     public GUIBattleScreen(Characters selected) {
         this.player = selected;
@@ -22,59 +22,47 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void initUI() {
-        // Specify the system boundary [cite: 191, 210]
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
         getContentPane().setBackground(new Color(20, 20, 20));
 
-        // --- STATS HEADER ---
+        // --- 1. HEADER (Stats) ---
         JPanel header = new JPanel(new GridLayout(1, 2));
         header.setBackground(Color.BLACK);
         header.setPreferredSize(new Dimension(0, 150));
-
         pStats = new JLabel();
         eStats = new JLabel("", SwingConstants.RIGHT);
         pStats.setFont(new Font("Monospaced", Font.BOLD, 26));
         eStats.setFont(new Font("Monospaced", Font.BOLD, 26));
-
-        header.add(pStats);
-        header.add(eStats);
+        header.add(pStats); header.add(eStats);
         add(header, BorderLayout.NORTH);
 
-        // --- ARENA ---
-        // --- ARENA (REWRITTEN FOR SYMMETRY) ---
-// GridBagLayout allows us to position them precisely in the center-ish area
-        JPanel arena = new JPanel(new GridBagLayout());
+        // --- 2. ARENA (Characters) ---
+        // Setting layout to null allows free movement and fixes the floating issue
+        arena = new JPanel(null);
         arena.setOpaque(false);
-        GridBagConstraints gbc = new GridBagConstraints();
 
         pSprite = new JLabel("", SwingConstants.CENTER);
-        eSprite = new FlippedLabel(); // Keep our flipped logic for the enemy
+        eSprite = new FlippedLabel(true); // Ensures the enemy faces you
 
-// Player Sprite Positioning
-        gbc.gridx = 0;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.SOUTH; // Stand on the "floor"
-        gbc.insets = new Insets(0, 250, 0, 0); // Pushes Tyron 250px from the left edge
-        arena.add(pSprite, gbc);
+        // MANUAL POSITIONING (The "Floor")
+        // x, y, width, height. We keep y=350 so they are on the same line.
+        pSprite.setBounds(300, 350, 300, 300);
+        eSprite.setBounds(1250, 350, 300, 300);
 
-// Enemy Sprite Positioning
-        gbc.gridx = 1;
-        gbc.weightx = 1.0;
-        gbc.anchor = GridBagConstraints.SOUTH;
-        gbc.insets = new Insets(0, 0, 0, 250); // Pushes Lance 250px from the right edge
-        arena.add(eSprite, gbc);
-
+        arena.add(pSprite);
+        arena.add(eSprite);
         add(arena, BorderLayout.CENTER);
-        // --- ACTION FOOTER ---
+
+        // --- 3. FOOTER (Actions) ---
         actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         actionPanel.setBackground(new Color(30, 30, 30));
         actionPanel.setPreferredSize(new Dimension(0, 200));
         setupButtons();
         add(actionPanel, BorderLayout.SOUTH);
 
-        refreshStats();
+        refresh();
         loadGif(pSprite, player.getName(), "idle");
         loadGif(eSprite, enemy.getName(), "idle");
     }
@@ -83,61 +71,56 @@ public class GUIBattleScreen extends JFrame {
         actionPanel.removeAll();
         for (Skills s : player.getSkills()) {
             JButton b = new JButton("<html><center><b>" + s.getSkillName() + "</b><br>"
-                    + s.getManaCost() + " Mana</center></html>");
+                    + "<font color='blue'>" + s.getManaCost() + " Mana</font></center></html>");
             b.setPreferredSize(new Dimension(280, 130));
-            b.setBackground(Color.WHITE); // White background
-            b.setForeground(Color.BLACK); // FIX: Black font color
+            b.setBackground(Color.WHITE);
+            b.setForeground(Color.BLACK);
             b.setFocusPainted(false);
             b.addActionListener(e -> playerTurn(s));
             actionPanel.add(b);
         }
 
-        // --- REST BUTTON ---
-        JButton rest = new JButton("<html><center><b>REST</b><br>Regen Mana</center></html>");
+        JButton rest = new JButton("<html><center><b>REST</b><br><font color='orange'>Regen Mana</font></center></html>");
         rest.setPreferredSize(new Dimension(200, 130));
-        rest.setBackground(new Color(100, 70, 20));
-        rest.setForeground(Color.BLACK); // FIX: Black font color
+        rest.setBackground(new Color(80, 60, 20));
+        rest.setForeground(Color.BLACK);
         rest.addActionListener(e -> {
-            if (isBusy) return;
-            player.updateMana(player.getManaPerTurn() * 2);
-            refreshStats();
-            computerTurn();
+            if (!isBusy) {
+                player.updateMana(player.getManaPerTurn() * 2);
+                refresh();
+                computerTurn();
+            }
         });
         actionPanel.add(rest);
     }
 
     private void playerTurn(Skills s) {
         if (isBusy || player.getMana() < s.getManaCost()) return;
-        isBusy = true;
-        toggleButtons(false);
+        isBusy = true; toggleButtons(false);
 
-        // Determine skill animation index
-        int idx = 1;
-        for (int i = 0; i < player.getSkills().length; i++) {
-            if (player.getSkills()[i] == s) { idx = i + 1; break; }
-        }
+        Point home = pSprite.getLocation();
+        Point target = new Point(eSprite.getLocation().x - 100, home.y);
 
-        loadGif(pSprite, player.getName(), "skill" + idx);
-
-        new Timer(1200, e -> {
-            player.updateMana(-s.getManaCost());
-            int dmg = BattleLogic.calculateDamage(player, enemy, s);
-            BattleLogic.processEffects(s, player, enemy, dmg);
-
-            loadGif(eSprite, enemy.getName(), "gothit");
-            refreshStats();
-
-            new Timer(800, e2 -> {
-                loadGif(pSprite, player.getName(), "idle");
-                if (enemy.getHp() <= 0) finalizeDuel("VICTORY", eSprite, enemy.getName());
-                else {
-                    loadGif(eSprite, enemy.getName(), "idle");
-                    computerTurn();
-                }
-                ((Timer)e2.getSource()).stop();
+        moveSprite(pSprite, player.getName(), target, () -> {
+            int idx = getSkillIndex(s);
+            loadGif(pSprite, player.getName(), "skill" + idx);
+            new Timer(1200, e1 -> {
+                player.updateMana(-s.getManaCost());
+                int dmg = BattleLogic.calculateDamage(player, enemy, s);
+                BattleLogic.processEffects(s, player, enemy, dmg);
+                loadGif(eSprite, enemy.getName(), "gothit");
+                refresh();
+                new Timer(800, e2 -> {
+                    moveSprite(pSprite, player.getName(), home, () -> {
+                        loadGif(pSprite, player.getName(), "idle");
+                        if (enemy.getHp() <= 0) finalizeDuel("VICTORY", eSprite, enemy.getName());
+                        else { loadGif(eSprite, enemy.getName(), "idle"); computerTurn(); }
+                    });
+                    ((Timer)e2.getSource()).stop();
+                }).start();
+                ((Timer)e1.getSource()).stop();
             }).start();
-            ((Timer)e.getSource()).stop();
-        }).start();
+        });
     }
 
     private void computerTurn() {
@@ -145,56 +128,62 @@ public class GUIBattleScreen extends JFrame {
         int pick = rand.nextInt(3);
         Skills s = enemy.getSkills()[pick];
 
-        if (enemy.getMana() >= s.getManaCost()) {
-            isBusy = true;
-            loadGif(eSprite, enemy.getName(), "skill" + (pick + 1));
+        if (enemy.getMana() < s.getManaCost()) {
+            enemy.updateMana(enemy.getManaPerTurn() * 2);
+            refresh(); isBusy = false; toggleButtons(true);
+            return;
+        }
 
-            new Timer(1200, e -> {
+        Point home = eSprite.getLocation();
+        Point target = new Point(pSprite.getLocation().x + 100, home.y);
+
+        moveSprite(eSprite, enemy.getName(), target, () -> {
+            loadGif(eSprite, enemy.getName(), "skill" + (pick + 1));
+            new Timer(1200, e1 -> {
                 enemy.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(enemy, player, s);
                 BattleLogic.processEffects(s, enemy, player, dmg);
-
                 loadGif(pSprite, player.getName(), "gothit");
-                refreshStats();
-
+                refresh();
                 new Timer(800, e2 -> {
-                    loadGif(eSprite, enemy.getName(), "idle");
-                    if (player.getHp() <= 0) finalizeDuel("DEFEAT", pSprite, player.getName());
-                    else {
-                        loadGif(pSprite, player.getName(), "idle");
-                        player.updateMana(player.getManaPerTurn());
-                        refreshStats();
-                        isBusy = false;
-                        toggleButtons(true);
-                    }
+                    moveSprite(eSprite, enemy.getName(), home, () -> {
+                        loadGif(eSprite, enemy.getName(), "idle");
+                        if (player.getHp() <= 0) finalizeDuel("DEFEAT", pSprite, player.getName());
+                        else { loadGif(pSprite, player.getName(), "idle"); player.updateMana(player.getManaPerTurn()); refresh(); isBusy = false; toggleButtons(true); }
+                    });
                     ((Timer)e2.getSource()).stop();
                 }).start();
-                ((Timer)e.getSource()).stop();
+                ((Timer)e1.getSource()).stop();
             }).start();
-        } else {
-            // AI rests if low on mana
-            enemy.updateMana(enemy.getManaPerTurn() * 2);
-            player.updateMana(player.getManaPerTurn());
-            refreshStats();
-            isBusy = false;
-            toggleButtons(true);
-        }
+        });
     }
 
-    private void finalizeDuel(String msg, JLabel sprite, String name) {
-        loadGif(sprite, name, "defeat");
-        new Timer(2000, e -> {
-            JOptionPane.showMessageDialog(this, msg);
-            dispose();
-            ((Timer)e.getSource()).stop();
-        }).start();
+    private void moveSprite(JLabel sprite, String name, Point dest, Runnable onDone) {
+        loadGif(sprite, name, "walk");
+        Timer t = new Timer(15, null);
+        t.addActionListener(e -> {
+            Point cur = sprite.getLocation();
+            int speed = 12;
+            int nextX = cur.x;
+
+            if (cur.x < dest.x) nextX = Math.min(cur.x + speed, dest.x);
+            else if (cur.x > dest.x) nextX = Math.max(cur.x - speed, dest.x);
+
+            // Stay on the same Y-level (no floating!)
+            sprite.setLocation(nextX, cur.y);
+
+            if (sprite.getLocation().x == dest.x) {
+                ((Timer)e.getSource()).stop();
+                onDone.run();
+            }
+        });
+        t.start();
     }
 
-    private void refreshStats() {
-        pStats.setText(String.format("<html><font color='white'>&nbsp;%s<br><font color='#FF3333'>HP: %d/%d</font><br><font color='#33FFFF'>MANA: %d/%d</font></font></html>",
+    private void refresh() {
+        pStats.setText(String.format("<html><font color='white'>&nbsp;%s<br><font color='#FF4444'>HP: %d/%d</font><br><font color='#44FFFF'>MANA: %d/%d</font></font></html>",
                 player.getName(), player.getHp(), player.getMaxHp(), player.getMana(), player.getMaxMana()));
-
-        eStats.setText(String.format("<html><font color='white'>%s&nbsp;<br><font color='#FF3333'>HP: %d/%d</font>&nbsp;<br><font color='#33FFFF'>MANA: %d/%d</font>&nbsp;</font></html>",
+        eStats.setText(String.format("<html><font color='white'>%s&nbsp;<br><font color='#FF4444'>HP: %d/%d</font>&nbsp;<br><font color='#44FFFF'>MANA: %d/%d</font>&nbsp;</font></html>",
                 enemy.getName(), enemy.getHp(), enemy.getMaxHp(), enemy.getMana(), enemy.getMaxMana()));
     }
 
@@ -208,18 +197,23 @@ public class GUIBattleScreen extends JFrame {
         }
     }
 
-    private void toggleButtons(boolean state) {
-        for (Component c : actionPanel.getComponents()) c.setEnabled(state);
+    private void toggleButtons(boolean s) { for (Component c : actionPanel.getComponents()) c.setEnabled(s); }
+    private int getSkillIndex(Skills s) { for (int i=0; i<3; i++) if (player.getSkills()[i] == s) return i+1; return 1; }
+    private void finalizeDuel(String m, JLabel s, String n) { loadGif(s, n, "defeat"); new Timer(2000, e -> { JOptionPane.showMessageDialog(this, m); dispose(); ((Timer)e.getSource()).stop(); }).start(); }
+    private Characters generateAI() { String[] ns = CharacterRegistry.getAllNames(); String n; do { n = ns[rand.nextInt(ns.length)]; } while (n.equals(player.getName())); return CharacterRegistry.getCharacter(n); }
+
+    class FlippedLabel extends JLabel {
+        private final boolean flip;
+        public FlippedLabel(boolean flip) { this.flip = flip; }
+        @Override
+        protected void paintComponent(Graphics g) {
+            if (flip) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.translate(getWidth(), 0);
+                g2.scale(-1, 1);
+                super.paintComponent(g2);
+                g2.dispose();
+            } else { super.paintComponent(g); }
+        }
     }
-
-    private Characters generateAI() {
-        String[] ns = CharacterRegistry.getAllNames();
-        String n;
-        do {
-            n = ns[rand.nextInt(ns.length)];
-        } while (n.equals(player.getName()));
-        return CharacterRegistry.getCharacter(n);
-    }
-
-
 }

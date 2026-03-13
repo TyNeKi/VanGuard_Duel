@@ -54,6 +54,7 @@ public class CharacterRegistry {
                         new Skills("Dark Surge", 40, 70, 100),
                         new Skills("Soul Reaver", 60, 90, 120)
                 });
+
             default:
                 return null;
         }
