@@ -5,6 +5,9 @@ import java.awt.*;
 import Data.CharacterRegistry;
 import GUIBattle.GUIBattleScreen;
 import GUIStart.GUIStartScreen;
+import java.net.URL;
+
+
 
 public class GUICharacterSelection extends JFrame {
     public GUICharacterSelection() {
@@ -47,10 +50,20 @@ public class GUICharacterSelection extends JFrame {
 
         for (String name : names) {
             JButton btn = new JButton(name);
+
+
+            java.net.URL bgURL = getClass().getResource("/resources/" + name + "_idle.gif ");
+            if (bgURL != null) {
+                btn.setIcon(new ImageIcon(bgURL));
+            }
+
+
             btn.addActionListener(e -> {
                 new GUIBattleScreen(CharacterRegistry.getCharacter(name)).setVisible(true);
                 dispose();
             });
+
+
             charPanel.add(btn);
         }
         add(charPanel, BorderLayout.CENTER);

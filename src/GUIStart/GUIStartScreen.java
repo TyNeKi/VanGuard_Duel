@@ -17,8 +17,10 @@ public class GUIStartScreen extends JFrame {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                URL bgURL = getClass().getResource("/resources/Background Vanguard.png");
+                URL bgURL = getClass().getResource("/resources/backgroundSample.gif");
                 if (bgURL != null) {
+
+
                     Image img = new ImageIcon(bgURL).getImage();
                     g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
                 } else {
@@ -78,11 +80,20 @@ public class GUIStartScreen extends JFrame {
                 JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
             }
         });
-
         gbc.gridy = 1;
         this.add(vsCompBtn, gbc);
 
-        // 3. Exit Button
+        JButton playerBtn = new JButton("Vs Player");
+        playerBtn.setPreferredSize(new Dimension(300, 70));
+        playerBtn.setFont(new Font("Arial", Font.BOLD, 24));
+        playerBtn.setFocusPainted(false);
+        playerBtn.setBackground(new Color(150, 0, 0));
+        playerBtn.setForeground(Color.BLACK);
+
+        gbc.gridy = 2;
+        this.add(playerBtn, gbc);
+
+
         JButton exitBtn = new JButton("Exit Game");
         exitBtn.setPreferredSize(new Dimension(300, 70));
         exitBtn.setFont(new Font("Arial", Font.BOLD, 24));
@@ -92,9 +103,11 @@ public class GUIStartScreen extends JFrame {
 
         exitBtn.addActionListener(e -> System.exit(0));
 
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         this.add(exitBtn, gbc);
     }
+
+
 
     public static void main(String[] args) {
         try {

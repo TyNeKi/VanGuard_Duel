@@ -11,6 +11,7 @@ public class CharacterRegistry {
                         new Skills("Precision Strike", 25, 35, 55),
                         new Skills("Energy Guard", 40, 0, 0),
                         new Skills("Overdrive Pulse", 60, 75, 105)
+
                 });
             case "Lance":
                 return new Characters("Lance", "Light Bringer", 520, 200, 20, new Skills[]{
