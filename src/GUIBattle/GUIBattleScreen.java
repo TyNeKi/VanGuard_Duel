@@ -14,10 +14,20 @@ public class GUIBattleScreen extends JFrame {
     private JPanel actionPanel, arena;
     private boolean isBusy = false;
     private final Random rand = new Random();
+    private boolean isPvP = false;
+    private boolean isPlayerOneTurn = true;
 
     public GUIBattleScreen(Characters selected) {
         this.player = selected;
         this.enemy = generateAI();
+        this.isPvP = false;
+        initUI();
+    }
+
+    public GUIBattleScreen(Characters player1, Characters player2) {
+        this.player = player1;
+        this.enemy = player2;
+        this.isPvP = true;
         initUI();
     }
 
@@ -95,32 +105,85 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void playerTurn(Skills s) {
-        if (isBusy || player.getMana() < s.getManaCost()) return;
-        isBusy = true; toggleButtons(false);
+        Characters attacker = isPvP
+                ? (isPlayerOneTurn ? player : enemy)
+                : player;
 
-        Point home = pSprite.getLocation();
-        Point target = new Point(eSprite.getLocation().x - 100, home.y);
+        Characters defender = isPvP
+                ? (isPlayerOneTurn ? enemy : player)
+                : enemy;
 
-        moveSprite(pSprite, player.getName(), target, () -> {
-            int idx = getSkillIndex(s);
-            loadGif(pSprite, player.getName(), "skill" + idx);
-            new Timer(1200, e1 -> {
-                player.updateMana(-s.getManaCost());
-                int dmg = BattleLogic.calculateDamage(player, enemy, s);
-                BattleLogic.processEffects(s, player, enemy, dmg);
-                loadGif(eSprite, enemy.getName(), "gothit");
+        if (isBusy || attacker.getMana() < s.getManaCost()) return;
+
+        isBusy = true;
+        toggleButtons(false);
+
+        attacker.updateMana(-s.getManaCost());
+        int dmg = BattleLogic.calculateDamage(attacker, defender, s);
+        BattleLogic.processEffects(s, attacker, defender, dmg);
+
+        refresh();
+
+        if (defender.getHp() <= 0) {
+            String result = isPvP
+                    ? (isPlayerOneTurn ? "PLAYER 1 WINS" : "PLAYER 2 WINS")
+                    : "VICTORY";
+
+            finalizeDuel(result,
+                    isPlayerOneTurn ? eSprite : pSprite,
+                    defender.getName());
+            return;
+        }
+
+        // IF PvP → SWITCH TURN
+        if (isPvP) {
+            isPlayerOneTurn = !isPlayerOneTurn;
+            updateButtonsForCurrentPlayer();
+            isBusy = false;
+            toggleButtons(true);
+        }
+        // IF PvE → COMPUTER TURN
+        else {
+            computerTurn();
+        }
+    }
+
+    private void updateButtonsForCurrentPlayer() {
+        actionPanel.removeAll();
+
+        Characters current = isPlayerOneTurn ? player : enemy;
+
+        for (Skills s : current.getSkills()) {
+            JButton b = new JButton("<html><center><b>" + s.getSkillName() + "</b><br>"
+                    + s.getManaCost() + " Mana</center></html>");
+
+            b.setPreferredSize(new Dimension(280, 130));
+            b.addActionListener(e -> playerTurn(s));
+
+            actionPanel.add(b);
+        }
+
+        JButton rest = new JButton("<html><center><b>REST</b><br><font color='orange'>Regen Mana</font></center></html>");
+        rest.setPreferredSize(new Dimension(200, 130));
+        rest.setBackground(new Color(80, 60, 20));
+
+        rest.addActionListener(e -> {
+            if (!isBusy) {
+                Characters currentPlayer = isPlayerOneTurn ? player : enemy;
+
+                currentPlayer.updateMana(currentPlayer.getManaPerTurn() * 2);
                 refresh();
-                new Timer(800, e2 -> {
-                    moveSprite(pSprite, player.getName(), home, () -> {
-                        loadGif(pSprite, player.getName(), "idle");
-                        if (enemy.getHp() <= 0) finalizeDuel("VICTORY", eSprite, enemy.getName());
-                        else { loadGif(eSprite, enemy.getName(), "idle"); computerTurn(); }
-                    });
-                    ((Timer)e2.getSource()).stop();
-                }).start();
-                ((Timer)e1.getSource()).stop();
-            }).start();
+
+                // switch turn after rest
+                isPlayerOneTurn = !isPlayerOneTurn;
+                updateButtonsForCurrentPlayer();
+            }
         });
+
+        actionPanel.add(rest);
+
+        revalidate();
+        repaint();
     }
 
     private void computerTurn() {

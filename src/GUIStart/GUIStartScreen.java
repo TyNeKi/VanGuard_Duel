@@ -69,7 +69,7 @@ public class GUIStartScreen extends JFrame {
             System.out.println("DEBUG: Vs Computer clicked. Transitioning...");
             try {
 
-                GUICharacterSelection selectionScreen = new GUICharacterSelection();
+                GUICharacterSelection selectionScreen = new GUICharacterSelection(false);
                 selectionScreen.setVisible(true);
 
                 // Close this screen
@@ -83,15 +83,20 @@ public class GUIStartScreen extends JFrame {
         gbc.gridy = 1;
         this.add(vsCompBtn, gbc);
 
-        JButton playerBtn = new JButton("Vs Player");
-        playerBtn.setPreferredSize(new Dimension(300, 70));
-        playerBtn.setFont(new Font("Arial", Font.BOLD, 24));
-        playerBtn.setFocusPainted(false);
-        playerBtn.setBackground(new Color(150, 0, 0));
-        playerBtn.setForeground(Color.BLACK);
+        JButton pvpBtn = new JButton("Vs Player");
+        pvpBtn.setPreferredSize(new Dimension(300, 70));
+        pvpBtn.setFont(new Font("Arial", Font.BOLD, 24));
+        pvpBtn.setFocusPainted(false);
+        pvpBtn.setBackground(new Color(50, 50, 50));
+        pvpBtn.setForeground(Color.BLACK);
+
+        pvpBtn.addActionListener(e -> {
+            new GUICharacterSelection(true).setVisible(true);
+            this.dispose();
+        });
 
         gbc.gridy = 2;
-        this.add(playerBtn, gbc);
+        this.add(pvpBtn, gbc);
 
 
         JButton exitBtn = new JButton("Exit Game");

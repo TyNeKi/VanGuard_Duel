@@ -5,12 +5,18 @@ import java.awt.*;
 import Data.CharacterRegistry;
 import GUIBattle.GUIBattleScreen;
 import GUIStart.GUIStartScreen;
+import Models.Characters;
 
 
 
 
 public class GUICharacterSelection extends JFrame {
-    public GUICharacterSelection() {
+    private boolean isPvP;
+    private Characters player1 = null;
+
+    public GUICharacterSelection(boolean isPvP) {
+        this.isPvP = isPvP;
+
         setTitle("Select Your Vanguard");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -52,15 +58,26 @@ public class GUICharacterSelection extends JFrame {
             JButton btn = new JButton(name);
 
 
-            java.net.URL bgURL = getClass().getResource("/resources/" + name + "_idle.gif ");
+            java.net.URL bgURL = getClass().getResource("/resources/" + name + "_idle.gif");
             if (bgURL != null) {
                 btn.setIcon(new ImageIcon(bgURL));
             }
 
 
             btn.addActionListener(e -> {
-                new GUIBattleScreen(CharacterRegistry.getCharacter(name)).setVisible(true);
-                dispose();
+                if (!isPvP) {
+                    new GUIBattleScreen(CharacterRegistry.getCharacter(name)).setVisible(true);
+                    dispose();
+                } else {
+                    if (player1 == null) {
+                        player1 = CharacterRegistry.getCharacter(name);
+                        JOptionPane.showMessageDialog(this, "Player 1 selected " + name);
+                    } else {
+                        Characters player2 = CharacterRegistry.getCharacter(name);
+                        new GUIBattleScreen(player1, player2).setVisible(true);
+                        dispose();
+                    }
+                }
             });
 
 
