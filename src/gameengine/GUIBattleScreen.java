@@ -1,12 +1,14 @@
-package GUIBattle;
+package gameengine;
 
 import javax.swing.*;
+
+import gamemodel.Characters;
+import gamemodel.Skills;
+
 import java.awt.*;
 import java.util.Random;
-import Models.Characters;
-import Models.Skills;
-import Data.CharacterRegistry;
-import Logic.BattleLogic;
+
+import logic.BattleLogic;
 
 public class GUIBattleScreen extends JFrame {
     private Characters player, enemy;

@@ -1,7 +1,7 @@
-package GUIStart;
+package gameengine;
 
-import GUIChooseChar.GUICharacterSelection; // Crucial import
 import javax.swing.*;
+
 import java.awt.*;
 import java.net.URL;
 

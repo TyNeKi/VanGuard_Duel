@@ -1,11 +1,10 @@
-package GUIChooseChar;
+package gameengine;
 
 import javax.swing.*;
+
+import gamemodel.Characters;
+
 import java.awt.*;
-import Data.CharacterRegistry;
-import GUIBattle.GUIBattleScreen;
-import GUIStart.GUIStartScreen;
-import Models.Characters;
 
 
 

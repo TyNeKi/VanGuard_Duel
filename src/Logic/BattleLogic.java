@@ -1,8 +1,9 @@
-package Logic;
+package logic;
 
-import Models.Characters;
-import Models.Skills;
 import java.util.Random;
+
+import gamemodel.Characters;
+import gamemodel.Skills;
 
 public class BattleLogic {
     private static final Random rand = new Random();

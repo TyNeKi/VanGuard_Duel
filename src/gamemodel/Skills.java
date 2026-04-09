@@ -1,4 +1,4 @@
-package Models;
+package gamemodel;
 
 public class Skills {
     private String skillName;

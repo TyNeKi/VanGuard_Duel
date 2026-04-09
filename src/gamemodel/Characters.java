@@ -1,4 +1,4 @@
-package Models;
+package gamemodel;
 
 public class Characters {
     private String name, role;

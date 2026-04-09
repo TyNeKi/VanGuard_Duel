@@ -1,7 +1,7 @@
-package Data;
+package gameengine;
 
-import Models.Characters;
-import Models.Skills;
+import gamemodel.Characters;
+import gamemodel.Skills;
 
 public class CharacterRegistry {
     public static Characters getCharacter(String name) {

@@ -1,4 +1,4 @@
-package GUIBattle;
+package gameengine;
 
 import javax.swing.*;
 import java.awt.*;
