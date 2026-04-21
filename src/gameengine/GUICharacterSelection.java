@@ -1,13 +1,9 @@
 package gameengine;
 
 import javax.swing.*;
-
 import gamemodel.Characters;
-
 import java.awt.*;
-
-
-
+import java.net.URL;
 
 public class GUICharacterSelection extends JFrame {
     private boolean isPvP;
@@ -15,71 +11,47 @@ public class GUICharacterSelection extends JFrame {
 
     public GUICharacterSelection(boolean isPvP) {
         this.isPvP = isPvP;
-
         setTitle("Select Your Vanguard");
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        // --- FULL SCREEN SETTINGS ---
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        this.setResizable(false);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
         getContentPane().setBackground(new Color(10, 25, 45));
         setLayout(new BorderLayout());
 
         JLabel header = new JLabel("CHOOSE YOUR VANGUARD", SwingConstants.CENTER);
-        header.setFont(new Font("Roboto", Font.BOLD, 50));
+        header.setFont(new Font("Impact", Font.PLAIN, 50));
         header.setForeground(Color.WHITE);
-        header.setBorder(BorderFactory.createEmptyBorder(25, 0, 25, 0));
+        header.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         add(header, BorderLayout.NORTH);
 
-        JPanel charPanel = new JPanel(new GridLayout(2, 4, 15, 15));
+        JPanel charPanel = new JPanel(new GridLayout(2, 4, 20, 20));
         charPanel.setOpaque(false);
-        charPanel.setBorder(BorderFactory.createEmptyBorder(25,40,25,40));
 
-
-        JPanel bottomPanel = new JPanel();
-        bottomPanel.setOpaque(false);
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 30, 0));
-
-        JButton backButton = new JButton("Return Main Menu");
-        backButton.setPreferredSize(new Dimension(300, 60));
-        backButton.setBackground(new Color(50, 50, 50 ));
-        backButton.setForeground(Color.ORANGE);
-        backButton.setFont(new Font("Sans-Serif", Font.BOLD, 19));
-
-        backButton.addActionListener(
-                e -> {new GUIStartScreen().setVisible(true);
-                        dispose();
-
-        });
-        bottomPanel.add(backButton);
-        add(bottomPanel, BorderLayout.SOUTH);
-
-        String[] names = CharacterRegistry.getAllNames();
-
-        for (String name : names) {
+        for (String name : CharacterRegistry.getAllNames()) {
             JButton btn = new JButton(name);
+            final String selectedName = name;
 
-
-            java.net.URL bgURL = getClass().getResource("/resources/" + name + "_idle.gif");
-            if (bgURL != null) {
-                btn.setIcon(new ImageIcon(bgURL));
-            }
-
+            URL idleURL = getClass().getResource("/resources/" + name + "_idle.gif");
+            if (idleURL != null) btn.setIcon(new ImageIcon(idleURL));
 
             btn.addActionListener(e -> {
+                Characters selected = CharacterRegistry.getCharacter(selectedName);
                 if (!isPvP) {
-                    new GUIBattleScreen(CharacterRegistry.getCharacter(name)).setVisible(true);
-                    dispose();
+                    new GUIBattleScreen(selected).setVisible(true);
+                    this.dispose();
                 } else {
                     if (player1 == null) {
-                        player1 = CharacterRegistry.getCharacter(name);
-                        JOptionPane.showMessageDialog(this, "Player 1 selected " + name);
+                        player1 = selected;
+                        JOptionPane.showMessageDialog(this, "Player 1 ready!");
                     } else {
-                        Characters player2 = CharacterRegistry.getCharacter(name);
-                        new GUIBattleScreen(player1, player2).setVisible(true);
-                        dispose();
+                        new GUIBattleScreen(player1, selected).setVisible(true);
+                        this.dispose();
                     }
                 }
             });
-
-
             charPanel.add(btn);
         }
         add(charPanel, BorderLayout.CENTER);
