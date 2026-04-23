@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class FlippedLabel extends JLabel {
-    private boolean flip;
+    public boolean flip;
     public FlippedLabel(boolean flip) { this.flip = flip; }
 
     @Override

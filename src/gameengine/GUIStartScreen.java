@@ -43,22 +43,30 @@ public class GUIStartScreen extends JFrame {
 
         JButton vsCompBtn = createMenuButton("Vs Computer");
         vsCompBtn.addActionListener(e -> {
-            new GUICharacterSelection(false).setVisible(true);
+            new GUICharacterSelection(false, false).setVisible(true);
             this.dispose();
         });
         gbc.gridy = 1; add(vsCompBtn, gbc);
 
         JButton pvpBtn = createMenuButton("Vs Player");
         pvpBtn.addActionListener(e -> {
-            new GUICharacterSelection(true).setVisible(true);
+            new GUICharacterSelection(true, false).setVisible(true);
             this.dispose();
         });
         gbc.gridy = 2; add(pvpBtn, gbc);
 
+        JButton arcadeBtn = createMenuButton("Arcade Mode");
+        arcadeBtn.setBackground(new Color(150, 100, 0));
+        arcadeBtn.addActionListener(e -> {
+            new GUICharacterSelection(false, true).setVisible(true);
+            this.dispose();
+        });
+        gbc.gridy = 3; add(arcadeBtn, gbc);
+
         JButton exitBtn = createMenuButton("Exit Game");
         exitBtn.setBackground(new Color(150, 0, 0));
         exitBtn.addActionListener(e -> System.exit(0));
-        gbc.gridy = 3; add(exitBtn, gbc);
+        gbc.gridy = 4; add(exitBtn, gbc);
     }
 
     private JButton createMenuButton(String text) {

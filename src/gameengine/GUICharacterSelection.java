@@ -7,10 +7,12 @@ import java.net.URL;
 
 public class GUICharacterSelection extends JFrame {
     private boolean isPvP;
+    private boolean isArcade;
     private Characters player1 = null;
 
-    public GUICharacterSelection(boolean isPvP) {
+    public GUICharacterSelection(boolean isPvP, boolean isArcade) {
         this.isPvP = isPvP;
+        this.isArcade = isArcade;
         setTitle("Select Your Vanguard");
 
         // --- FULL SCREEN SETTINGS ---
@@ -39,7 +41,10 @@ public class GUICharacterSelection extends JFrame {
 
             btn.addActionListener(e -> {
                 Characters selected = CharacterRegistry.getCharacter(selectedName);
-                if (!isPvP) {
+                if (isArcade) {
+                    new GUIBattleScreen(selected, true).setVisible(true);
+                    this.dispose();
+                } else if (!isPvP) {
                     new GUIBattleScreen(selected).setVisible(true);
                     this.dispose();
                 } else {
