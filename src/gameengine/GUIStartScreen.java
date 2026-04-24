@@ -41,27 +41,27 @@ public class GUIStartScreen extends JFrame {
         JLabel titleLabel = (imgURL != null) ? new JLabel(new ImageIcon(imgURL)) : new JLabel("VANGUARD DUEL");
         gbc.gridy = 0; add(titleLabel, gbc);
 
-        JButton vsCompBtn = createMenuButton("Vs Computer");
-        vsCompBtn.addActionListener(e -> {
-            new GUICharacterSelection(false, false).setVisible(true);
-            this.dispose();
-        });
-        gbc.gridy = 1; add(vsCompBtn, gbc);
-
-        JButton pvpBtn = createMenuButton("Vs Player");
-        pvpBtn.addActionListener(e -> {
-            new GUICharacterSelection(true, false).setVisible(true);
-            this.dispose();
-        });
-        gbc.gridy = 2; add(pvpBtn, gbc);
-
         JButton arcadeBtn = createMenuButton("Arcade Mode");
         arcadeBtn.setBackground(new Color(150, 100, 0));
         arcadeBtn.addActionListener(e -> {
             new GUICharacterSelection(false, true).setVisible(true);
             this.dispose();
         });
-        gbc.gridy = 3; add(arcadeBtn, gbc);
+        gbc.gridy = 1; add(arcadeBtn, gbc);
+
+        JButton vsCompBtn = createMenuButton("Vs Computer");
+        vsCompBtn.addActionListener(e -> {
+            new GUICharacterSelection(false, false).setVisible(true);
+            this.dispose();
+        });
+        gbc.gridy = 2; add(vsCompBtn, gbc);
+
+        JButton pvpBtn = createMenuButton("Vs Player");
+        pvpBtn.addActionListener(e -> {
+            new GUICharacterSelection(true, false).setVisible(true);
+            this.dispose();
+        });
+        gbc.gridy = 3; add(pvpBtn, gbc);
 
         JButton exitBtn = createMenuButton("Exit Game");
         exitBtn.setBackground(new Color(150, 0, 0));

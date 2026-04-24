@@ -60,5 +60,19 @@ public class GUICharacterSelection extends JFrame {
             charPanel.add(btn);
         }
         add(charPanel, BorderLayout.CENTER);
+
+        JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        footer.setOpaque(false);
+        JButton backButton = new JButton("Back");
+        backButton.setPreferredSize(new Dimension(200, 60));
+        backButton.setFont(new Font("Arial", Font.BOLD, 18));
+        backButton.setBackground(new Color(120, 120, 120));
+        backButton.setForeground(Color.WHITE);
+        backButton.addActionListener(e -> {
+            new GUIStartScreen().setVisible(true);
+            this.dispose();
+        });
+        footer.add(backButton);
+        add(footer, BorderLayout.SOUTH);
     }
 }

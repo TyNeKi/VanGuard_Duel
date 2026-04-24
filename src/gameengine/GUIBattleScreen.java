@@ -5,6 +5,7 @@ import javax.swing.border.TitledBorder;
 import gamemodel.Characters;
 import gamemodel.Skills;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Random;
 import java.net.URL;
 import Logic.BattleLogic;
@@ -53,7 +54,7 @@ public class GUIBattleScreen extends JFrame {
         this.currentPlayer = selected;
         this.isPvP = false;
         this.isArcade = true;
-        this.arcadeOpponents = CharacterRegistry.getAllNames();
+        this.arcadeOpponents = buildArcadeOpponents(selected.getName());
         this.currentArcadeIndex = 0;
         this.arcadeDefeats = 0;
         selectNextArcadeOpponent();
@@ -313,6 +314,9 @@ public class GUIBattleScreen extends JFrame {
     private void computerTurn() {
         if (isPvP) { isBusy = false; toggleButtons(true); return; }
 
+        if (currentTurnLabel != null) {
+            currentTurnLabel.setText("Current Turn: " + opponent.getName());
+        }
         isBusy = true; toggleButtons(false);
         new Timer(1000, e -> {
             opponent.updateMana(opponent.getManaPerTurn());
@@ -359,6 +363,9 @@ public class GUIBattleScreen extends JFrame {
                         moveSprite(eSprite, opponent.getName(), origin, () -> {
                             loadGif(eSprite, opponent.getName(), "idle");
                             loadGif(pSprite, currentPlayer.getName(), "idle");
+                            if (currentTurnLabel != null) {
+                                currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                            }
                             isBusy = false;
                             checkRoundOver();
                         });
@@ -368,6 +375,9 @@ public class GUIBattleScreen extends JFrame {
             } else {
                 opponent.updateMana(opponent.getManaPerTurn() * 3); refresh();
                 appendToLog(opponent.getName() + " rests, gaining " + (opponent.getManaPerTurn() * 3) + " Mana.");
+                if (currentTurnLabel != null) {
+                    currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                }
                 isBusy = false; toggleButtons(true);
             }
             ((Timer)e.getSource()).stop();
@@ -399,13 +409,15 @@ public class GUIBattleScreen extends JFrame {
             if (p1RoundsWon >= 2) {
                 if (isArcade) {
                     arcadeDefeats++;
-                    currentArcadeIndex++;
-                    if (currentArcadeIndex >= arcadeOpponents.length) {
+                    if (currentArcadeIndex >= arcadeOpponents.length - 1) {
                         finalizeMatch("ARCADE COMPLETE! YOU DEFEATED ALL OPPONENTS!");
                     } else {
-                        selectNextArcadeOpponent();
+                        currentArcadeIndex++;
+                        currentPlayer = player1;
                         p1RoundsWon = 0;
                         p2RoundsWon = 0;
+                        currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                        selectNextArcadeOpponent();
                         JOptionPane.showMessageDialog(this, "Next Opponent: " + opponent.getName() + "!");
                         resetRound();
                     }
@@ -473,7 +485,19 @@ public class GUIBattleScreen extends JFrame {
         JButton exit = new JButton("EXIT");
         exit.setPreferredSize(new Dimension(150, 120));
         exit.setBackground(new Color(150, 0, 0)); exit.setForeground(Color.WHITE);
-        exit.addActionListener(e -> { new GUIStartScreen().setVisible(true); dispose(); });
+        exit.addActionListener(e -> {
+            int result = JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to go back to the main menu?",
+                "Confirm Return",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE
+            );
+            if (result == JOptionPane.YES_OPTION) {
+                new GUIStartScreen().setVisible(true);
+                dispose();
+            }
+        });
         actionPanel.add(exit);
         actionPanel.revalidate(); actionPanel.repaint();
     }
@@ -485,13 +509,23 @@ public class GUIBattleScreen extends JFrame {
             player1.updateHp(player1.getMaxHp()); player1.updateMana(player1.getMaxMana());
             player2.updateHp(player2.getMaxHp()); player2.updateMana(player2.getMaxMana());
         } else {
+            currentPlayer = player1;
+            currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
             currentPlayer.updateHp(currentPlayer.getMaxHp()); currentPlayer.updateMana(currentPlayer.getMaxMana());
             opponent.updateHp(opponent.getMaxHp()); opponent.updateMana(opponent.getMaxMana());
+            if (eSprite != null) {
+                loadGif(eSprite, opponent.getName(), "idle");
+            }
         }
-        refresh(); isBusy = false; toggleButtons(true);
         if (turnTimer != null) turnTimer.stop();
         if (displayTimer != null) displayTimer.stop();
         turnTimerLabel.setVisible(false);
+        refresh();
+        updateRoundsDisplay();
+        if (isPvP) {
+            startPvPTimer();
+        }
+        isBusy = false; toggleButtons(true);
     }
 
     private void finalizeMatch(String msg) {
@@ -613,15 +647,23 @@ public class GUIBattleScreen extends JFrame {
         return CharacterRegistry.getCharacter(ns[rand.nextInt(ns.length)]);
     }
 
+    private String[] buildArcadeOpponents(String playerName) {
+        return Arrays.stream(CharacterRegistry.getAllNames())
+                     .filter(name -> !name.equals(playerName))
+                     .toArray(String[]::new);
+    }
+
     private void selectNextArcadeOpponent() {
         if (currentArcadeIndex < arcadeOpponents.length) {
-            String opponentName = arcadeOpponents[currentArcadeIndex];
-            // Skip if it's the player's character
-            if (!opponentName.equals(player1.getName())) {
-                opponent = CharacterRegistry.getCharacter(opponentName);
-            } else {
-                currentArcadeIndex++;
-                selectNextArcadeOpponent();
+            opponent = CharacterRegistry.getCharacter(arcadeOpponents[currentArcadeIndex]);
+            if (eSprite != null) {
+                loadGif(eSprite, opponent.getName(), "idle");
+            }
+            if (statContainer != null) {
+                updateRoundsDisplay();
+            }
+            if (currentTurnLabel != null) {
+                currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
             }
         }
     }
