@@ -1,0 +1,98 @@
+[
+  {
+    "name": "Tyron",
+    "role": "Energy Sentinel",
+    "hp": 500,
+    "mana": 200,
+    "manaPerTurn": 15,
+    "skills": [
+      {"name": "Precision Strike", "manaCost": 25, "minDamage": 35, "maxDamage": 55, "effect": "DAMAGE"},
+      {"name": "Energy Guard", "manaCost": 40, "minDamage": 0, "maxDamage": 0, "effect": "GUARD"},
+      {"name": "Overdrive Pulse", "manaCost": 60, "minDamage": 75, "maxDamage": 105, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Lance",
+    "role": "Light Bringer",
+    "hp": 520,
+    "mana": 200,
+    "manaPerTurn": 20,
+    "skills": [
+      {"name": "Holy Nova Smash", "manaCost": 25, "minDamage": 35, "maxDamage": 55, "effect": "DAMAGE"},
+      {"name": "Light Pillar", "manaCost": 35, "minDamage": 0, "maxDamage": 0, "effect": "DEBUFF"},
+      {"name": "Supernova Strike", "manaCost": 65, "minDamage": 80, "maxDamage": 110, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Adrian",
+    "role": "Abyssal Blade",
+    "hp": 500,
+    "mana": 180,
+    "manaPerTurn": 15,
+    "skills": [
+      {"name": "Abyss Slash", "manaCost": 25, "minDamage": 40, "maxDamage": 60, "effect": "DAMAGE"},
+      {"name": "Void Rend", "manaCost": 35, "minDamage": 65, "maxDamage": 95, "effect": "DAMAGE"},
+      {"name": "Oblivion Edge", "manaCost": 55, "minDamage": 90, "maxDamage": 120, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Clark",
+    "role": "Kyuoka Blade Dance",
+    "hp": 500,
+    "mana": 220,
+    "manaPerTurn": 20,
+    "skills": [
+      {"name": "Elemental Strike", "manaCost": 25, "minDamage": 35, "maxDamage": 55, "effect": "DAMAGE"},
+      {"name": "Elemental Burst", "manaCost": 50, "minDamage": 70, "maxDamage": 100, "effect": "DAMAGE"},
+      {"name": "Hydro Guard", "manaCost": 40, "minDamage": 0, "maxDamage": 0, "effect": "GUARD"}
+    ]
+  },
+  {
+    "name": "Raze",
+    "role": "Inferno Berserker",
+    "hp": 520,
+    "mana": 160,
+    "manaPerTurn": 10,
+    "skills": [
+      {"name": "Flame Cleave", "manaCost": 25, "minDamage": 45, "maxDamage": 70, "effect": "DAMAGE"},
+      {"name": "Scorch Rush", "manaCost": 35, "minDamage": 70, "maxDamage": 100, "effect": "DAMAGE"},
+      {"name": "Cataclysm Blaze", "manaCost": 60, "minDamage": 95, "maxDamage": 125, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Marie",
+    "role": "Arcane Tempest",
+    "hp": 500,
+    "mana": 200,
+    "manaPerTurn": 15,
+    "skills": [
+      {"name": "Arcane Bolt", "manaCost": 25, "minDamage": 40, "maxDamage": 60, "effect": "DAMAGE"},
+      {"name": "Mana Burn", "manaCost": 35, "minDamage": 45, "maxDamage": 65, "effect": "MANA_BURN"},
+      {"name": "Tempest Surge", "manaCost": 60, "minDamage": 80, "maxDamage": 110, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Alyana",
+    "role": "Radiant Aegis",
+    "hp": 500,
+    "mana": 220,
+    "manaPerTurn": 20,
+    "skills": [
+      {"name": "Light Spear", "manaCost": 25, "minDamage": 40, "maxDamage": 65, "effect": "DAMAGE"},
+      {"name": "Radiant Blessing", "manaCost": 40, "minDamage": 0, "maxDamage": 0, "effect": "HEAL"},
+      {"name": "Divine Retribution", "manaCost": 60, "minDamage": 75, "maxDamage": 105, "effect": "DAMAGE"}
+    ]
+  },
+  {
+    "name": "Katarina",
+    "role": "Shadow Dominator",
+    "hp": 480,
+    "mana": 200,
+    "manaPerTurn": 15,
+    "skills": [
+      {"name": "Shadow Slash", "manaCost": 25, "minDamage": 45, "maxDamage": 70, "effect": "DAMAGE"},
+      {"name": "Dark Surge", "manaCost": 40, "minDamage": 70, "maxDamage": 100, "effect": "DAMAGE"},
+      {"name": "Soul Reaver", "manaCost": 60, "minDamage": 90, "maxDamage": 120, "effect": "LIFE_STEAL"}
+    ]
+  }
+]

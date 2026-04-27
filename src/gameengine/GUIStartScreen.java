@@ -1,7 +1,6 @@
 package gameengine;
 
 import javax.swing.*;
-
 import java.awt.*;
 import java.net.URL;
 
@@ -9,8 +8,10 @@ public class GUIStartScreen extends JFrame {
 
     public GUIStartScreen() {
         setTitle("VanGuard Duel - Main Menu");
-        this.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        this.setResizable(false);
+
+        // --- THE FULL SCREEN FIX ---
+        this.setExtendedState(JFrame.MAXIMIZED_BOTH); // Fills the laptop screen
+        this.setResizable(false); // Prevents manual resizing
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         JPanel backgroundPanel = new JPanel() {
@@ -19,20 +20,14 @@ public class GUIStartScreen extends JFrame {
                 super.paintComponent(g);
                 URL bgURL = getClass().getResource("/resources/backgroundSample.gif");
                 if (bgURL != null) {
-
-
                     Image img = new ImageIcon(bgURL).getImage();
                     g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
-                } else {
-                    g.setColor(new Color(153, 101, 21));
-                    g.fillRect(0, 0, getWidth(), getHeight());
                 }
             }
         };
 
         backgroundPanel.setLayout(new GridBagLayout());
         this.setContentPane(backgroundPanel);
-
         setupCenteredUI();
     }
 
@@ -42,86 +37,48 @@ public class GUIStartScreen extends JFrame {
         gbc.insets = new Insets(15, 10, 15, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-
         URL imgURL = getClass().getResource("/resources/titleGameMainMenu.png");
-        JLabel titleLabel;
+        JLabel titleLabel = (imgURL != null) ? new JLabel(new ImageIcon(imgURL)) : new JLabel("VANGUARD DUEL");
+        gbc.gridy = 0; add(titleLabel, gbc);
 
-        if (imgURL != null) {
-            titleLabel = new JLabel(new ImageIcon(imgURL));
-        } else {
-            titleLabel = new JLabel("VANGUARD DUEL");
-            titleLabel.setFont(new Font("Serif", Font.BOLD, 60));
-            titleLabel.setForeground(Color.WHITE);
-        }
-        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        gbc.gridy = 0;
-        this.add(titleLabel, gbc);
-
-        // 2. VS Computer Button
-        JButton vsCompBtn = new JButton("Vs Computer");
-        vsCompBtn.setPreferredSize(new Dimension(300, 70));
-        vsCompBtn.setFont(new Font("Arial", Font.BOLD, 24));
-        vsCompBtn.setFocusPainted(false);
-        vsCompBtn.setBackground(new Color(50, 50, 50));
-        vsCompBtn.setForeground(Color.BLACK);
-
-        vsCompBtn.addActionListener(e -> {
-            System.out.println("DEBUG: Vs Computer clicked. Transitioning...");
-            try {
-
-                GUICharacterSelection selectionScreen = new GUICharacterSelection(false);
-                selectionScreen.setVisible(true);
-
-                // Close this screen
-                this.dispose();
-            } catch (Exception ex) {
-                System.err.println("CRASH DETECTED: Could not open Selection Screen.");
-                ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage());
-            }
-        });
-        gbc.gridy = 1;
-        this.add(vsCompBtn, gbc);
-
-        JButton pvpBtn = new JButton("Vs Player");
-        pvpBtn.setPreferredSize(new Dimension(300, 70));
-        pvpBtn.setFont(new Font("Arial", Font.BOLD, 24));
-        pvpBtn.setFocusPainted(false);
-        pvpBtn.setBackground(new Color(50, 50, 50));
-        pvpBtn.setForeground(Color.BLACK);
-
-        pvpBtn.addActionListener(e -> {
-            new GUICharacterSelection(true).setVisible(true);
+        JButton arcadeBtn = createMenuButton("Arcade Mode");
+        arcadeBtn.setBackground(new Color(150, 100, 0));
+        arcadeBtn.addActionListener(e -> {
+            new GUICharacterSelection(false, true).setVisible(true);
             this.dispose();
         });
+        gbc.gridy = 1; add(arcadeBtn, gbc);
 
-        gbc.gridy = 2;
-        this.add(pvpBtn, gbc);
+        JButton vsCompBtn = createMenuButton("Vs Computer");
+        vsCompBtn.addActionListener(e -> {
+            new GUICharacterSelection(false, false).setVisible(true);
+            this.dispose();
+        });
+        gbc.gridy = 2; add(vsCompBtn, gbc);
 
+        JButton pvpBtn = createMenuButton("Vs Player");
+        pvpBtn.addActionListener(e -> {
+            new GUICharacterSelection(true, false).setVisible(true);
+            this.dispose();
+        });
+        gbc.gridy = 3; add(pvpBtn, gbc);
 
-        JButton exitBtn = new JButton("Exit Game");
-        exitBtn.setPreferredSize(new Dimension(300, 70));
-        exitBtn.setFont(new Font("Arial", Font.BOLD, 24));
-        exitBtn.setFocusPainted(false);
+        JButton exitBtn = createMenuButton("Exit Game");
         exitBtn.setBackground(new Color(150, 0, 0));
-        exitBtn.setForeground(Color.BLACK);
-
         exitBtn.addActionListener(e -> System.exit(0));
-
-        gbc.gridy = 3;
-        this.add(exitBtn, gbc);
+        gbc.gridy = 4; add(exitBtn, gbc);
     }
 
-
+    private JButton createMenuButton(String text) {
+        JButton btn = new JButton(text);
+        btn.setPreferredSize(new Dimension(300, 70));
+        btn.setFont(new Font("Arial", Font.BOLD, 24));
+        btn.setBackground(new Color(50, 50, 50));
+        btn.setForeground(Color.WHITE);
+        return btn;
+    }
 
     public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignored) {}
-
-
-        java.awt.EventQueue.invokeLater(() -> {
-            new GUIStartScreen().setVisible(true);
-        });
+        SwingUtilities.invokeLater(() -> new GUIStartScreen().setVisible(true));
     }
 }
