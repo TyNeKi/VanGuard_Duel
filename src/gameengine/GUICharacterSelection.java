@@ -9,6 +9,7 @@ public class GUICharacterSelection extends JFrame {
     private boolean isPvP;
     private boolean isArcade;
     private Characters player1 = null;
+    private JLabel header;
 
     public GUICharacterSelection(boolean isPvP, boolean isArcade) {
         this.isPvP = isPvP;
@@ -23,9 +24,10 @@ public class GUICharacterSelection extends JFrame {
         getContentPane().setBackground(new Color(10, 25, 45));
         setLayout(new BorderLayout());
 
-        JLabel header = new JLabel("CHOOSE YOUR VANGUARD", SwingConstants.CENTER);
+        String headerText = isPvP ? "PLAYER 1 CHOOSE YOUR VANGUARD" : "CHOOSE YOUR VANGUARD";
+        header = new JLabel(headerText, SwingConstants.CENTER);
         header.setFont(new Font("Impact", Font.PLAIN, 50));
-        header.setForeground(Color.WHITE);
+        header.setForeground(isPvP ? new Color(255, 200, 0) : Color.WHITE);
         header.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         add(header, BorderLayout.NORTH);
 
@@ -50,7 +52,14 @@ public class GUICharacterSelection extends JFrame {
                 } else {
                     if (player1 == null) {
                         player1 = selected;
-                        JOptionPane.showMessageDialog(this, "Player 1 ready!");
+                        header.setText("PLAYER 1: " + player1.getName() + " | PLAYER 2 CHOOSE YOUR VANGUARD");
+                        header.setForeground(new Color(255, 200, 0));
+                        // Disable the button that was chosen by Player 1
+                        for (Component comp : charPanel.getComponents()) {
+                            if (comp instanceof JButton && ((JButton)comp).getText().equals(selectedName)) {
+                                comp.setEnabled(false);
+                            }
+                        }
                     } else {
                         new GUIBattleScreen(player1, selected).setVisible(true);
                         this.dispose();

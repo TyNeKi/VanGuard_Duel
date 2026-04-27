@@ -2,6 +2,9 @@ package gameengine;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.StyledDocument;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
 import gamemodel.Characters;
 import gamemodel.Skills;
 import java.awt.*;
@@ -15,7 +18,7 @@ public class GUIBattleScreen extends JFrame {
     private JLabel pSprite, eSprite;
     private JProgressBar pHP, pMana, eHP, eMana;
     private JPanel actionPanel, arena, hud, statContainer;
-    private JTextArea battleLog;
+    private JTextPane battleLog;
     private Timer turnTimer;
     private boolean isBusy = false;
     private boolean isPvP = false;
@@ -87,7 +90,8 @@ public class GUIBattleScreen extends JFrame {
 
         JPanel northPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         northPanel.setBackground(new Color(10, 10, 50));
-        currentTurnLabel = new JLabel("Current Turn: " + currentPlayer.getName());
+        String initialTurnText = isPvP ? "PLAYER 1 TURN: " + player1.getName() : "Current Turn: " + currentPlayer.getName();
+        currentTurnLabel = new JLabel(initialTurnText);
         currentTurnLabel.setForeground(Color.WHITE);
         currentTurnLabel.setFont(new Font("Arial", Font.BOLD, 20));
         northPanel.add(currentTurnLabel);
@@ -97,8 +101,8 @@ public class GUIBattleScreen extends JFrame {
         statContainer.setOpaque(false);
         String p1Label = player1.getName();
         String p2Label = isPvP ? player2.getName() : opponent.getName();
-        statContainer.add(createStatPanel(p1Label, pHP = new JProgressBar(), pMana = new JProgressBar(), p1RoundsWon, 2));
-        statContainer.add(createStatPanel(p2Label, eHP = new JProgressBar(), eMana = new JProgressBar(), p2RoundsWon, 2));
+        statContainer.add(createStatPanel(p1Label, pHP = new JProgressBar(), pMana = new JProgressBar(), p1RoundsWon, 3));
+        statContainer.add(createStatPanel(p2Label, eHP = new JProgressBar(), eMana = new JProgressBar(), p2RoundsWon, 3));
         hud.add(statContainer, BorderLayout.CENTER);
 
         JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -135,25 +139,52 @@ public class GUIBattleScreen extends JFrame {
         add(arena, BorderLayout.CENTER);
 
         // Battle Log
-        battleLog = new JTextArea(20, 30);
+        battleLog = new JTextPane();
         battleLog.setEditable(false);
-        battleLog.setBackground(new Color(10, 10, 50));
-        battleLog.setForeground(Color.GREEN);
-        battleLog.setFont(new Font("Monospaced", Font.PLAIN, 12));
+        battleLog.setBackground(new Color(10, 10, 40));
+        battleLog.setForeground(new Color(100, 255, 100));
+        battleLog.setFont(new Font("Consolas", Font.PLAIN, 12));
+
+        final StyledDocument doc = battleLog.getStyledDocument();
+
         JScrollPane logScroll = new JScrollPane(battleLog);
-        logScroll.setPreferredSize(new Dimension(400, 0));
-        logScroll.setBorder(BorderFactory.createTitledBorder(
+        logScroll.setPreferredSize(new Dimension(420, 0));
+        logScroll.getViewport().setBackground(new Color(10, 10, 40));
+        logScroll.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(100, 200, 255), 3),
             BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(Color.YELLOW, 2),
-                BorderFactory.createEmptyBorder(5, 5, 5, 5)
-            ),
-            "Battle Log",
-            TitledBorder.CENTER,
-            TitledBorder.TOP,
-            new Font("Arial", Font.BOLD, 14),
-            Color.WHITE
+                BorderFactory.createLineBorder(new Color(30, 60, 120), 2),
+                BorderFactory.createEmptyBorder(8, 8, 8, 8)
+            )
         ));
-        add(logScroll, BorderLayout.EAST);
+        
+        JPanel logTitlePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        logTitlePanel.setOpaque(false);
+        logTitlePanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
+        JLabel logTitle = new JLabel("⚔ BATTLE LOG ⚔");
+        logTitle.setForeground(new Color(100, 200, 255));
+        logTitle.setFont(new Font("Impact", Font.BOLD, 16));
+        logTitlePanel.add(logTitle);
+        
+        JPanel logPanel = new JPanel(new BorderLayout());
+        logPanel.setOpaque(false);
+        logPanel.add(logTitlePanel, BorderLayout.NORTH);
+        logPanel.add(logScroll, BorderLayout.CENTER);
+        add(logPanel, BorderLayout.EAST);
+
+        // Initialize battle log with header
+        try {
+            SimpleAttributeSet headerStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(headerStyle, new Color(100, 200, 255));
+            StyleConstants.setBold(headerStyle, true);
+            StyleConstants.setFontSize(headerStyle, 11);
+
+            doc.insertString(0, "============================\n", headerStyle);
+            doc.insertString(doc.getLength(), "BATTLE INITIATED\n", headerStyle);
+            doc.insertString(doc.getLength(), "============================\n\n", headerStyle);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // Footer
         actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
@@ -364,7 +395,7 @@ public class GUIBattleScreen extends JFrame {
                             loadGif(eSprite, opponent.getName(), "idle");
                             loadGif(pSprite, currentPlayer.getName(), "idle");
                             if (currentTurnLabel != null) {
-                                currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                                currentTurnLabel.setText(getTurnLabelText());
                             }
                             isBusy = false;
                             checkRoundOver();
@@ -376,7 +407,7 @@ public class GUIBattleScreen extends JFrame {
                 opponent.updateMana(opponent.getManaPerTurn() * 3); refresh();
                 appendToLog(opponent.getName() + " rests, gaining " + (opponent.getManaPerTurn() * 3) + " Mana.");
                 if (currentTurnLabel != null) {
-                    currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                    currentTurnLabel.setText(getTurnLabelText());
                 }
                 isBusy = false; toggleButtons(true);
             }
@@ -400,44 +431,56 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void checkRoundOver() {
-        if (opponent.getHp() <= 0) {
-            appendToLog(currentPlayer.getName() + " wins the round!");
-            if (isPvP) {
-                if (currentPlayer == player1) p1RoundsWon++; else p2RoundsWon++;
-            } else p1RoundsWon++;
-            updateRoundsDisplay();
-            if (p1RoundsWon >= 2) {
-                if (isArcade) {
-                    arcadeDefeats++;
-                    if (currentArcadeIndex >= arcadeOpponents.length - 1) {
-                        finalizeMatch("ARCADE COMPLETE! YOU DEFEATED ALL OPPONENTS!");
-                    } else {
-                        currentArcadeIndex++;
-                        currentPlayer = player1;
-                        p1RoundsWon = 0;
-                        p2RoundsWon = 0;
-                        currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
-                        selectNextArcadeOpponent();
-                        JOptionPane.showMessageDialog(this, "Next Opponent: " + opponent.getName() + "!");
-                        resetRound();
-                    }
-                } else {
-                    finalizeMatch("PLAYER 1 WINS!");
-                }
-            } else resetRound();
-        } else if (currentPlayer.getHp() <= 0) {
-            appendToLog(opponent.getName() + " wins the round!");
-            if (isPvP) {
-                if (currentPlayer == player1) p2RoundsWon++; else p1RoundsWon++;
-            } else p2RoundsWon++;
-            updateRoundsDisplay();
-            if (p2RoundsWon >= 2) {
-                if (isArcade) {
-                    finalizeMatch("GAME OVER! Defeated by " + opponent.getName() + " at " + arcadeDefeats + " opponent(s) defeated.");
-                } else {
-                    finalizeMatch(isPvP ? "PLAYER 2 WINS!" : opponent.getName() + " WINS!");
-                }
-            } else resetRound();
+         if (opponent.getHp() <= 0) {
+             appendToLog(currentPlayer.getName() + " wins the round!");
+             if (isPvP) {
+                 if (currentPlayer == player1) p1RoundsWon++; else p2RoundsWon++;
+             } else p1RoundsWon++;
+             updateRoundsDisplay();
+             if (isPvP) {
+                 if (p1RoundsWon >= 3) {
+                     finalizeMatch("PLAYER 1 WINS!");
+                 } else if (p2RoundsWon >= 3) {
+                     finalizeMatch("PLAYER 2 WINS!");
+                 } else resetRound();
+             } else {
+                 if (p1RoundsWon >= 3) {
+                     if (isArcade) {
+                         arcadeDefeats++;
+                         if (currentArcadeIndex >= arcadeOpponents.length - 1) {
+                             finalizeMatch("ARCADE COMPLETE! YOU DEFEATED ALL OPPONENTS!");
+                         } else {
+                             currentArcadeIndex++;
+                             currentPlayer = player1;
+                             p1RoundsWon = 0;
+                             p2RoundsWon = 0;
+                             currentTurnLabel.setText(getTurnLabelText());
+                             selectNextArcadeOpponent();
+                             JOptionPane.showMessageDialog(this, "Next Opponent: " + opponent.getName() + "!");
+                             resetRound();
+                         }
+                     } else {
+                         finalizeMatch("PLAYER 1 WINS!");
+                     }
+                 } else resetRound();
+             }
+         } else if (currentPlayer.getHp() <= 0) {
+             appendToLog(opponent.getName() + " wins the round!");
+             if (isPvP) {
+                 if (currentPlayer == player2) p1RoundsWon++; else p2RoundsWon++;
+             } else p2RoundsWon++;
+             updateRoundsDisplay();
+             if (isPvP) {
+                 if (p1RoundsWon >= 3) {
+                     finalizeMatch("PLAYER 1 WINS!");
+                 } else if (p2RoundsWon >= 3) {
+                     finalizeMatch("PLAYER 2 WINS!");
+                 } else resetRound();
+             } else {
+                 if (p2RoundsWon >= 3) {
+                     finalizeMatch("GAME OVER! Defeated by " + opponent.getName() + " at " + arcadeDefeats + " opponent(s) defeated.");
+                 } else resetRound();
+             }
         } else {
             if (isPvP) {
                 swapPlayers();
@@ -503,6 +546,18 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void resetRound() {
+        try {
+            StyledDocument doc = battleLog.getStyledDocument();
+            SimpleAttributeSet separatorStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(separatorStyle, new Color(255, 200, 0));
+            StyleConstants.setBold(separatorStyle, true);
+            
+            doc.insertString(doc.getLength(), "\n* ======== NEXT ROUND ======== *\n\n", separatorStyle);
+            battleLog.setCaretPosition(doc.getLength());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         appendToLog("Starting next round!");
         JOptionPane.showMessageDialog(this, "Next Round!");
         if (isPvP) {
@@ -510,7 +565,7 @@ public class GUIBattleScreen extends JFrame {
             player2.updateHp(player2.getMaxHp()); player2.updateMana(player2.getMaxMana());
         } else {
             currentPlayer = player1;
-            currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+            currentTurnLabel.setText(getTurnLabelText());
             currentPlayer.updateHp(currentPlayer.getMaxHp()); currentPlayer.updateMana(currentPlayer.getMaxMana());
             opponent.updateHp(opponent.getMaxHp()); opponent.updateMana(opponent.getMaxMana());
             if (eSprite != null) {
@@ -529,7 +584,22 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void finalizeMatch(String msg) {
-        appendToLog(msg);
+        try {
+            StyledDocument doc = battleLog.getStyledDocument();
+            SimpleAttributeSet endStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(endStyle, new Color(255, 215, 0));
+            StyleConstants.setBold(endStyle, true);
+            StyleConstants.setFontSize(endStyle, 12);
+            
+            doc.insertString(doc.getLength(), "\n=====================================\n", endStyle);
+            doc.insertString(doc.getLength(), "   * BATTLE CONCLUDED *\n", endStyle);
+            doc.insertString(doc.getLength(), msg + "\n", endStyle);
+            doc.insertString(doc.getLength(), "=====================================\n", endStyle);
+            battleLog.setCaretPosition(doc.getLength());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         JOptionPane.showMessageDialog(this, msg);
         if (turnTimer != null) turnTimer.stop();
         if (displayTimer != null) displayTimer.stop();
@@ -611,7 +681,7 @@ public class GUIBattleScreen extends JFrame {
         currentPlayer = (currentPlayer == player1) ? player2 : player1;
         opponent = (opponent == player1) ? player2 : player1;
         appendToLog("Now it's " + currentPlayer.getName() + "'s turn.");
-        currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+        currentTurnLabel.setText(getTurnLabelText());
         setupButtons();
         refresh();
         isBusy = false;
@@ -642,6 +712,18 @@ public class GUIBattleScreen extends JFrame {
 
     private void toggleButtons(boolean s) { for (Component c : actionPanel.getComponents()) c.setEnabled(s); }
 
+    private String getTurnLabelText() {
+        if (isPvP) {
+            if (currentPlayer == player1) {
+                return "PLAYER 1 TURN: " + currentPlayer.getName();
+            } else {
+                return "PLAYER 2 TURN: " + currentPlayer.getName();
+            }
+        } else {
+            return "Current Turn: " + currentPlayer.getName();
+        }
+    }
+
     private Characters generateAI() {
         String[] ns = CharacterRegistry.getAllNames();
         return CharacterRegistry.getCharacter(ns[rand.nextInt(ns.length)]);
@@ -663,24 +745,93 @@ public class GUIBattleScreen extends JFrame {
                 updateRoundsDisplay();
             }
             if (currentTurnLabel != null) {
-                currentTurnLabel.setText("Current Turn: " + currentPlayer.getName());
+                currentTurnLabel.setText(getTurnLabelText());
             }
         }
     }
 
     private void updateRoundsDisplay() {
-        statContainer.removeAll();
-        String p1Label = player1.getName();
-        String p2Label = isPvP ? player2.getName() : opponent.getName();
-        statContainer.add(createStatPanel(p1Label, pHP, pMana, p1RoundsWon, 2));
-        statContainer.add(createStatPanel(p2Label, eHP, eMana, p2RoundsWon, 2));
-        statContainer.revalidate();
+         statContainer.removeAll();
+         String p1Label = player1.getName();
+         String p2Label = isPvP ? player2.getName() : opponent.getName();
+         statContainer.add(createStatPanel(p1Label, pHP, pMana, p1RoundsWon, 3));
+         statContainer.add(createStatPanel(p2Label, eHP, eMana, p2RoundsWon, 3));
+         statContainer.revalidate();
         statContainer.repaint();
     }
 
     private void appendToLog(String msg) {
-        battleLog.append(msg + "\n");
-        battleLog.setCaretPosition(battleLog.getDocument().getLength());
+        try {
+            StyledDocument doc = battleLog.getStyledDocument();
+
+            // Create different attribute styles
+            SimpleAttributeSet victoryStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(victoryStyle, new Color(255, 215, 0)); // Gold
+            StyleConstants.setBold(victoryStyle, true);
+            StyleConstants.setFontSize(victoryStyle, 13);
+
+            SimpleAttributeSet damageStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(damageStyle, new Color(255, 80, 80)); // Red
+            StyleConstants.setBold(damageStyle, true);
+
+            SimpleAttributeSet healStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(healStyle, new Color(100, 255, 100)); // Green
+
+            SimpleAttributeSet skillStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(skillStyle, new Color(100, 200, 255)); // Cyan
+            StyleConstants.setBold(skillStyle, true);
+
+            SimpleAttributeSet restStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(restStyle, new Color(255, 165, 0)); // Orange
+
+            SimpleAttributeSet turnStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(turnStyle, new Color(255, 255, 150)); // Light Yellow
+            StyleConstants.setBold(turnStyle, true);
+
+            SimpleAttributeSet buffStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(buffStyle, new Color(200, 150, 255)); // Purple
+
+            SimpleAttributeSet defaultStyle = new SimpleAttributeSet();
+            StyleConstants.setForeground(defaultStyle, new Color(150, 200, 100)); // Light Green
+
+            // Determine message type and format accordingly
+            if (msg.contains("wins the round") || msg.contains("WINS")) {
+                doc.insertString(doc.getLength(), "=== * ", null);
+                doc.insertString(doc.getLength(), msg, victoryStyle);
+                doc.insertString(doc.getLength(), " * ===\n", null);
+            } else if (msg.contains("damage") || msg.contains("Deals")) {
+                doc.insertString(doc.getLength(), "[DMG] ", null);
+                doc.insertString(doc.getLength(), msg, damageStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else if (msg.contains("heals") || msg.contains("healing")) {
+                doc.insertString(doc.getLength(), "[HP+] ", null);
+                doc.insertString(doc.getLength(), msg, healStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else if (msg.contains("uses") || msg.contains("Skill")) {
+                doc.insertString(doc.getLength(), "[SKL] ", null);
+                doc.insertString(doc.getLength(), msg, skillStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else if (msg.contains("rests") || msg.contains("gaining")) {
+                doc.insertString(doc.getLength(), "[RST] ", null);
+                doc.insertString(doc.getLength(), msg, restStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else if (msg.contains("turn") || msg.contains("Now")) {
+                doc.insertString(doc.getLength(), "[>>>] ", null);
+                doc.insertString(doc.getLength(), msg, turnStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else if (msg.contains("reduces") || msg.contains("reduced") || msg.contains("prepares")) {
+                doc.insertString(doc.getLength(), "[BUF] ", null);
+                doc.insertString(doc.getLength(), msg, buffStyle);
+                doc.insertString(doc.getLength(), "\n", null);
+            } else {
+                doc.insertString(doc.getLength(), msg + "\n", defaultStyle);
+            }
+
+            // Auto-scroll to bottom
+            battleLog.setCaretPosition(doc.getLength());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void startPvPTimer() {
