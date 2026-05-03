@@ -104,12 +104,12 @@ public class UIFactory {
         return btn;
     }
 
-    public static void playSound(String soundFile) {
+    public static Clip playSound(String soundFile) {
         try {
             URL url = UIFactory.class.getResource(soundFile);
             if (url == null) {
                 System.err.println("Couldn't find file: " + soundFile);
-                return;
+                return null;
             }
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(new BufferedInputStream(url.openStream()));
             Clip soundClip = AudioSystem.getClip();
@@ -120,8 +120,10 @@ public class UIFactory {
                 sfxVolumeControl.setValue(dB);
             }
             soundClip.start();
+            return soundClip;
         } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
 

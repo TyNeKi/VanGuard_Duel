@@ -1,5 +1,6 @@
 package gameengine;
 
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.SimpleAttributeSet;
@@ -34,6 +35,7 @@ public class GUIBattleScreen extends JPanel {
     private int arcadeDefeats = 0;
     private JLabel currentTurnLabel;
     private ActionListener onExitListener;
+    private Clip currentSkillSound;
 
     public GUIBattleScreen(Characters selected) {
         this.player1 = selected;
@@ -221,6 +223,7 @@ public class GUIBattleScreen extends JPanel {
                 skillIdx = i + 1; break;
             }
         }
+        final int finalSkillIdx = skillIdx;
         final String skillAction = "skill" + skillIdx;
 
         JLabel sprite = (isPvP && currentPlayer == player2) ? eSprite : pSprite;
@@ -232,6 +235,9 @@ public class GUIBattleScreen extends JPanel {
             Point target = (sprite == pSprite) ? new Point(eSprite.getX() - 80, origin.y) : new Point(pSprite.getX() + 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
+                if (attackerName.equals("Tyron")) {
+                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
+                }
                 loadGif(sprite, attackerName, skillAction);
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -267,6 +273,9 @@ public class GUIBattleScreen extends JPanel {
                         ((Timer)eHit.getSource()).stop();
                     }).start();
                     moveSprite(sprite, attackerName, origin, () -> {
+                        if (currentSkillSound != null) {
+                            currentSkillSound.stop();
+                        }
                         loadGif(sprite, attackerName, "idle");
                         checkRoundOver();
                     });
@@ -279,6 +288,9 @@ public class GUIBattleScreen extends JPanel {
             Point target = new Point(eSprite.getX() - 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
+                if (attackerName.equals("Tyron")) {
+                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
+                }
                 loadGif(sprite, attackerName, skillAction); // Play specific skill
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -315,6 +327,9 @@ public class GUIBattleScreen extends JPanel {
                         ((Timer)eHit.getSource()).stop();
                     }).start();
                     moveSprite(sprite, attackerName, origin, () -> {
+                        if (currentSkillSound != null) {
+                            currentSkillSound.stop();
+                        }
                         loadGif(sprite, attackerName, "idle");
                         checkRoundOver();
                     });
@@ -344,6 +359,9 @@ public class GUIBattleScreen extends JPanel {
                 Point target = new Point(pSprite.getX() + 80, origin.y);
 
                 moveSprite(eSprite, opponent.getName(), target, () -> {
+                    if (opponent.getName().equals("Tyron")) {
+                        currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + (pick + 1) + "SoundEffect.wav");
+                    }
                     loadGif(eSprite, opponent.getName(), skillAction);
                     opponent.updateMana(-s.getManaCost());
                     int dmg = BattleLogic.calculateDamage(opponent, currentPlayer, s);
@@ -379,6 +397,9 @@ public class GUIBattleScreen extends JPanel {
                             ((Timer)eHit.getSource()).stop();
                         }).start();
                         moveSprite(eSprite, opponent.getName(), origin, () -> {
+                            if (currentSkillSound != null) {
+                                currentSkillSound.stop();
+                            }
                             loadGif(eSprite, opponent.getName(), "idle");
                             loadGif(pSprite, currentPlayer.getName(), "idle");
                             if (currentTurnLabel != null) {
