@@ -1,19 +1,21 @@
 package gameengine;
 
+import javax.sound.sampled.Clip;
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import gamemodel.Characters;
 import gamemodel.Skills;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.Random;
 import java.net.URL;
 import Logic.BattleLogic;
 
-public class GUIBattleScreen extends JFrame {
+public class GUIBattleScreen extends JPanel {
     private Characters player1, player2, currentPlayer, opponent;
     private JLabel pSprite, eSprite;
     private JProgressBar pHP, pMana, eHP, eMana;
@@ -32,6 +34,8 @@ public class GUIBattleScreen extends JFrame {
     private int currentArcadeIndex = 0;
     private int arcadeDefeats = 0;
     private JLabel currentTurnLabel;
+    private ActionListener onExitListener;
+    private Clip currentSkillSound;
 
     public GUIBattleScreen(Characters selected) {
         this.player1 = selected;
@@ -56,7 +60,7 @@ public class GUIBattleScreen extends JFrame {
         this.player1 = selected;
         this.currentPlayer = selected;
         this.isPvP = false;
-        this.isArcade = true;
+        this.isArcade = isArcade;
         this.arcadeOpponents = buildArcadeOpponents(selected.getName());
         this.currentArcadeIndex = 0;
         this.arcadeDefeats = 0;
@@ -65,19 +69,8 @@ public class GUIBattleScreen extends JFrame {
     }
 
     private void initUI() {
-        setTitle("VanGuard Duel - Arena");
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setResizable(false);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        getContentPane().setBackground(new Color(20, 20, 20));
-
-        // Ensure window stays maximized
-        addWindowStateListener(e -> {
-            if ((e.getNewState() & JFrame.MAXIMIZED_BOTH) == 0) {
-                setExtendedState(JFrame.MAXIMIZED_BOTH);
-            }
-        });
+        setBackground(new Color(20, 20, 20));
 
         // HUD
         hud = new JPanel(new BorderLayout());
@@ -100,7 +93,7 @@ public class GUIBattleScreen extends JFrame {
         statContainer = new JPanel(new GridLayout(1, 2, 20, 0));
         statContainer.setOpaque(false);
         String p1Label = player1.getName();
-        String p2Label = isPvP ? player2.getName() : opponent.getName();
+        String p2Label = isPvP ? player2.getName() : (opponent != null ? opponent.getName() : "AI");
         statContainer.add(createStatPanel(p1Label, pHP = new JProgressBar(), pMana = new JProgressBar(), p1RoundsWon, 3));
         statContainer.add(createStatPanel(p2Label, eHP = new JProgressBar(), eMana = new JProgressBar(), p2RoundsWon, 3));
         hud.add(statContainer, BorderLayout.CENTER);
@@ -183,7 +176,7 @@ public class GUIBattleScreen extends JFrame {
             doc.insertString(doc.getLength(), "BATTLE INITIATED\n", headerStyle);
             doc.insertString(doc.getLength(), "============================\n\n", headerStyle);
         } catch (Exception e) {
-            e.printStackTrace();
+            // More robust logging can be added here
         }
 
         // Footer
@@ -199,30 +192,11 @@ public class GUIBattleScreen extends JFrame {
 
         refresh();
         loadGif(pSprite, player1.getName(), "idle");
-        loadGif(eSprite, isPvP ? player2.getName() : opponent.getName(), "idle");
+        if (opponent != null) {
+            loadGif(eSprite, opponent.getName(), "idle");
+        }
         if (isPvP) {
-            turnTimer = new Timer(30000, e -> {
-                if (!isBusy) {
-                    displayTimer.stop();
-                    currentPlayer.updateMana(currentPlayer.getManaPerTurn() * 4);
-                    refresh();
-                    appendToLog(currentPlayer.getName() + " took too long and rests, gaining " + (currentPlayer.getManaPerTurn() * 4) + " Mana.");
-                    swapPlayers();
-                }
-            });
-            turnTimer.setRepeats(false);
-            turnTimer.start();
-            remainingTime = 30;
-            turnTimerLabel.setVisible(true);
-            turnTimerLabel.setText("Time: 30");
-            displayTimer = new Timer(1000, e -> {
-                remainingTime--;
-                turnTimerLabel.setText("Time: " + remainingTime);
-                if (remainingTime <= 0) {
-                    displayTimer.stop();
-                }
-            });
-            displayTimer.start();
+            startPvPTimer();
         }
     }
 
@@ -249,6 +223,7 @@ public class GUIBattleScreen extends JFrame {
                 skillIdx = i + 1; break;
             }
         }
+        final int finalSkillIdx = skillIdx;
         final String skillAction = "skill" + skillIdx;
 
         JLabel sprite = (isPvP && currentPlayer == player2) ? eSprite : pSprite;
@@ -260,6 +235,9 @@ public class GUIBattleScreen extends JFrame {
             Point target = (sprite == pSprite) ? new Point(eSprite.getX() - 80, origin.y) : new Point(pSprite.getX() + 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
+                if (attackerName.equals("Tyron")) {
+                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
+                }
                 loadGif(sprite, attackerName, skillAction);
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -285,11 +263,19 @@ public class GUIBattleScreen extends JFrame {
 
                 new Timer(1200, e -> {
                     loadGif(opponentSprite, defenderName, "gothit");
+                    if (opponent.getGender().equals("female")) {
+                        UIFactory.playSound("/resources/female_gothit.wav");
+                    } else {
+                        UIFactory.playSound("/resources/male_gothit.wav");
+                    }
                     new Timer(500, eHit -> {
                         loadGif(opponentSprite, defenderName, "idle");
                         ((Timer)eHit.getSource()).stop();
                     }).start();
                     moveSprite(sprite, attackerName, origin, () -> {
+                        if (currentSkillSound != null) {
+                            currentSkillSound.stop();
+                        }
                         loadGif(sprite, attackerName, "idle");
                         checkRoundOver();
                     });
@@ -302,6 +288,9 @@ public class GUIBattleScreen extends JFrame {
             Point target = new Point(eSprite.getX() - 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
+                if (attackerName.equals("Tyron")) {
+                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
+                }
                 loadGif(sprite, attackerName, skillAction); // Play specific skill
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -327,12 +316,20 @@ public class GUIBattleScreen extends JFrame {
 
                 new Timer(1200, e -> {
                     loadGif(opponentSprite, defenderName, "gothit");
+                    if (opponent.getGender().equals("female")) {
+                        UIFactory.playSound("/resources/female_gothit.wav");
+                    } else {
+                        UIFactory.playSound("/resources/male_gothit.wav");
+                    }
                     // Load idle after hit animation
                     new Timer(500, eHit -> {
                         loadGif(opponentSprite, defenderName, "idle");
                         ((Timer)eHit.getSource()).stop();
                     }).start();
                     moveSprite(sprite, attackerName, origin, () -> {
+                        if (currentSkillSound != null) {
+                            currentSkillSound.stop();
+                        }
                         loadGif(sprite, attackerName, "idle");
                         checkRoundOver();
                     });
@@ -362,6 +359,9 @@ public class GUIBattleScreen extends JFrame {
                 Point target = new Point(pSprite.getX() + 80, origin.y);
 
                 moveSprite(eSprite, opponent.getName(), target, () -> {
+                    if (opponent.getName().equals("Tyron")) {
+                        currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + (pick + 1) + "SoundEffect.wav");
+                    }
                     loadGif(eSprite, opponent.getName(), skillAction);
                     opponent.updateMana(-s.getManaCost());
                     int dmg = BattleLogic.calculateDamage(opponent, currentPlayer, s);
@@ -386,12 +386,20 @@ public class GUIBattleScreen extends JFrame {
 
                     new Timer(1200, e2 -> {
                         loadGif(pSprite, currentPlayer.getName(), "gothit");
+                        if (currentPlayer.getGender().equals("female")) {
+                            UIFactory.playSound("/resources/female_gothit.wav");
+                        } else {
+                            UIFactory.playSound("/resources/male_gothit.wav");
+                        }
                         // Load idle after hit animation
                         new Timer(500, eHit -> {
                             loadGif(pSprite, currentPlayer.getName(), "idle");
                             ((Timer)eHit.getSource()).stop();
                         }).start();
                         moveSprite(eSprite, opponent.getName(), origin, () -> {
+                            if (currentSkillSound != null) {
+                                currentSkillSound.stop();
+                            }
                             loadGif(eSprite, opponent.getName(), "idle");
                             loadGif(pSprite, currentPlayer.getName(), "idle");
                             if (currentTurnLabel != null) {
@@ -494,22 +502,15 @@ public class GUIBattleScreen extends JFrame {
 
     private void setupButtons() {
         actionPanel.removeAll();
-        int i = 0;
         for (Skills s : currentPlayer.getSkills()) {
-            JButton b = new JButton("<html><center><b>Skill " + (i+1) + "</b><br>" + s.getManaCost() + " MP</center></html>");
+            JButton b = UIFactory.createStyledButton("<html><center><b>" + s.getSkillName() + "</b><br>" + s.getManaCost() + " MP</center></html>", new Color(70, 70, 70), new Color(40, 40, 40));
             b.setPreferredSize(new Dimension(220, 120));
             b.setFont(new Font("Arial", Font.BOLD, 16));
-            b.setBorder(BorderFactory.createRaisedBevelBorder());
-            b.setFocusPainted(false);
-            b.setBackground(new Color(70, 70, 70));
-            b.setForeground(Color.WHITE);
             b.addActionListener(e -> playerTurn(s));
             actionPanel.add(b);
-            i++;
         }
-        JButton rest = new JButton("REST");
+        JButton rest = UIFactory.createStyledButton("REST", new Color(0, 100, 0), new Color(0, 70, 0));
         rest.setPreferredSize(new Dimension(150, 120));
-        rest.setBackground(new Color(0, 100, 0)); rest.setForeground(Color.WHITE);
         rest.addActionListener(e -> {
             isBusy = true;
             if (turnTimer != null) turnTimer.stop();
@@ -525,9 +526,8 @@ public class GUIBattleScreen extends JFrame {
         });
         actionPanel.add(rest);
 
-        JButton exit = new JButton("EXIT");
+        JButton exit = UIFactory.createStyledButton("EXIT", new Color(150, 0, 0), new Color(100, 0, 0));
         exit.setPreferredSize(new Dimension(150, 120));
-        exit.setBackground(new Color(150, 0, 0)); exit.setForeground(Color.WHITE);
         exit.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
                 this,
@@ -537,8 +537,9 @@ public class GUIBattleScreen extends JFrame {
                 JOptionPane.WARNING_MESSAGE
             );
             if (result == JOptionPane.YES_OPTION) {
-                new GUIStartScreen().setVisible(true);
-                dispose();
+                if (onExitListener != null) {
+                    onExitListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit"));
+                }
             }
         });
         actionPanel.add(exit);
@@ -555,7 +556,7 @@ public class GUIBattleScreen extends JFrame {
             doc.insertString(doc.getLength(), "\n* ======== NEXT ROUND ======== *\n\n", separatorStyle);
             battleLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
-            e.printStackTrace();
+            // More robust logging can be added here
         }
 
         appendToLog("Starting next round!");
@@ -597,14 +598,16 @@ public class GUIBattleScreen extends JFrame {
             doc.insertString(doc.getLength(), "=====================================\n", endStyle);
             battleLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
-            e.printStackTrace();
+            // More robust logging can be added here
         }
         
         JOptionPane.showMessageDialog(this, msg);
         if (turnTimer != null) turnTimer.stop();
         if (displayTimer != null) displayTimer.stop();
         turnTimerLabel.setVisible(false);
-        new GUIStartScreen().setVisible(true); dispose();
+        if (onExitListener != null) {
+            onExitListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit"));
+        }
     }
 
     private JPanel createStatPanel(String name, JProgressBar hp, JProgressBar mana, int wins, int maxWins) {
@@ -650,7 +653,7 @@ public class GUIBattleScreen extends JFrame {
         JPanel roundsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
         roundsPanel.setOpaque(false);
         for (int i = 0; i < maxWins; i++) {
-            JLabel roundLabel = new JLabel(i < wins ? "\u25CF" : "\u25CB");
+            JLabel roundLabel = new JLabel(i < wins ? "●" : "○");
             roundLabel.setForeground(new Color(255, 220, 100));
             roundLabel.setFont(new Font("Arial", Font.BOLD, 20));
             roundsPanel.add(roundLabel);
@@ -753,7 +756,7 @@ public class GUIBattleScreen extends JFrame {
     private void updateRoundsDisplay() {
          statContainer.removeAll();
          String p1Label = player1.getName();
-         String p2Label = isPvP ? player2.getName() : opponent.getName();
+         String p2Label = isPvP ? player2.getName() : (opponent != null ? opponent.getName() : "AI");
          statContainer.add(createStatPanel(p1Label, pHP, pMana, p1RoundsWon, 3));
          statContainer.add(createStatPanel(p2Label, eHP, eMana, p2RoundsWon, 3));
          statContainer.revalidate();
@@ -830,7 +833,7 @@ public class GUIBattleScreen extends JFrame {
             // Auto-scroll to bottom
             battleLog.setCaretPosition(doc.getLength());
         } catch (Exception e) {
-            e.printStackTrace();
+            // More robust logging can be added here
         }
     }
 
@@ -864,5 +867,9 @@ public class GUIBattleScreen extends JFrame {
         
         turnTimer.start();
         displayTimer.start();
+    }
+
+    public void setOnExitListener(ActionListener listener) {
+        this.onExitListener = listener;
     }
 }
