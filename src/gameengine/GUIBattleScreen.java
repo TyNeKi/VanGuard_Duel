@@ -36,6 +36,7 @@ public class GUIBattleScreen extends JPanel {
     private JLabel currentTurnLabel;
     private ActionListener onExitListener;
     private Clip currentSkillSound;
+    private Clip walkSound;
     private String map;
 
     public GUIBattleScreen(Characters selected, String map) {
@@ -428,6 +429,7 @@ public class GUIBattleScreen extends JPanel {
     }
 
     private void moveSprite(JLabel sprite, String name, Point dest, Runnable onDone) {
+        walkSound = UIFactory.playSound("/resources/walk_sound.wav");
         if (!loadGifIfExists(sprite, name, "walk")) {
             loadGif(sprite, name, "idle");
         }
@@ -437,7 +439,13 @@ public class GUIBattleScreen extends JPanel {
             int curX = sprite.getX();
             int nextX = (curX < dest.x) ? Math.min(curX + speed, dest.x) : Math.max(curX - speed, dest.x);
             sprite.setLocation(nextX, sprite.getY());
-            if (sprite.getX() == dest.x) { ((Timer)e.getSource()).stop(); onDone.run(); }
+            if (sprite.getX() == dest.x) {
+                if (walkSound != null) {
+                    walkSound.stop();
+                }
+                ((Timer)e.getSource()).stop();
+                onDone.run();
+            }
         });
         t.start();
     }
