@@ -10,6 +10,7 @@ public class GUICharacterSelection extends JFrame {
     private boolean isArcade;
     private Characters player1 = null;
     private JLabel header;
+    private JPanel charPanel;
 
     public GUICharacterSelection(boolean isPvP, boolean isArcade) {
         this.isPvP = isPvP;
@@ -31,57 +32,91 @@ public class GUICharacterSelection extends JFrame {
         header.setBorder(BorderFactory.createEmptyBorder(30, 0, 30, 0));
         add(header, BorderLayout.NORTH);
 
-        JPanel charPanel = new JPanel(new GridLayout(2, 4, 20, 20));
+        charPanel = new JPanel(new GridLayout(2, 4, 30, 30));
         charPanel.setOpaque(false);
+        charPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         for (String name : CharacterRegistry.getAllNames()) {
-            JButton btn = new JButton(name);
-            final String selectedName = name;
-
-            URL idleURL = getClass().getResource("/resources/" + name + "_idle.gif");
-            if (idleURL != null) btn.setIcon(new ImageIcon(idleURL));
-
-            btn.addActionListener(e -> {
-                Characters selected = CharacterRegistry.getCharacter(selectedName);
-                if (isArcade) {
-                    new GUIBattleScreen(selected, true).setVisible(true);
-                    this.dispose();
-                } else if (!isPvP) {
-                    new GUIBattleScreen(selected).setVisible(true);
-                    this.dispose();
-                } else {
-                    if (player1 == null) {
-                        player1 = selected;
-                        header.setText("PLAYER 1: " + player1.getName() + " | PLAYER 2 CHOOSE YOUR VANGUARD");
-                        header.setForeground(new Color(255, 200, 0));
-                        // Disable the button that was chosen by Player 1
-                        for (Component comp : charPanel.getComponents()) {
-                            if (comp instanceof JButton && ((JButton)comp).getText().equals(selectedName)) {
-                                comp.setEnabled(false);
-                            }
-                        }
-                    } else {
-                        new GUIBattleScreen(player1, selected).setVisible(true);
-                        this.dispose();
-                    }
-                }
-            });
-            charPanel.add(btn);
+            JPanel charCard = createCharacterCard(name);
+            charPanel.add(charCard);
         }
         add(charPanel, BorderLayout.CENTER);
 
         JPanel footer = new JPanel(new FlowLayout(FlowLayout.CENTER));
         footer.setOpaque(false);
-        JButton backButton = new JButton("Back");
+        JButton backButton = UIFactory.createStyledButton("Back", new Color(120, 120, 120), new Color(80, 80, 80));
         backButton.setPreferredSize(new Dimension(200, 60));
-        backButton.setFont(new Font("Arial", Font.BOLD, 18));
-        backButton.setBackground(new Color(120, 120, 120));
-        backButton.setForeground(Color.WHITE);
         backButton.addActionListener(e -> {
             new GUIStartScreen().setVisible(true);
             this.dispose();
         });
         footer.add(backButton);
         add(footer, BorderLayout.SOUTH);
+    }
+
+    private JPanel createCharacterCard(String name) {
+        JPanel card = new JPanel();
+        card.setLayout(new BorderLayout());
+        card.setBackground(new Color(30, 30, 30));
+        card.setBorder(BorderFactory.createLineBorder(new Color(255, 200, 0), 2));
+        card.setPreferredSize(new Dimension(200, 250));
+        card.putClientProperty("name", name);
+
+        JLabel nameLabel = new JLabel(name, SwingConstants.CENTER);
+        nameLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        nameLabel.setForeground(Color.WHITE);
+        card.add(nameLabel, BorderLayout.SOUTH);
+
+        URL idleURL = getClass().getResource("/resources/" + name + "_idle.gif");
+        if (idleURL != null) {
+            ImageIcon icon = new ImageIcon(idleURL);
+            JLabel imageLabel = new JLabel(icon, SwingConstants.CENTER);
+            card.add(imageLabel, BorderLayout.CENTER);
+        }
+
+        card.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                if (card.isEnabled()) {
+                    card.setBorder(BorderFactory.createLineBorder(new Color(255, 255, 0), 3));
+                    UIFactory.playSound("/resources/button_hover.wav");
+                }
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                if (card.isEnabled()) {
+                    card.setBorder(BorderFactory.createLineBorder(new Color(255, 200, 0), 2));
+                }
+            }
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                if (!card.isEnabled()) return;
+                UIFactory.playSound("/resources/button_click.wav");
+                Characters selected = CharacterRegistry.getCharacter(name);
+                if (isArcade) {
+                    new GUIBattleScreen(selected, true).setVisible(true);
+                    GUICharacterSelection.this.dispose();
+                } else if (!isPvP) {
+                    new GUIBattleScreen(selected).setVisible(true);
+                    GUICharacterSelection.this.dispose();
+                } else {
+                    if (player1 == null) {
+                        player1 = selected;
+                        header.setText("PLAYER 1: " + player1.getName() + " | PLAYER 2 CHOOSE YOUR VANGUARD");
+                        header.setForeground(new Color(255, 200, 0));
+                        // Disable the card that was chosen by Player 1
+                        for (Component comp : charPanel.getComponents()) {
+                            if (comp instanceof JPanel && name.equals(((JComponent)comp).getClientProperty("name"))) {
+                                comp.setEnabled(false);
+                                comp.setBackground(new Color(80, 80, 80));
+                                ((JComponent)comp).setBorder(BorderFactory.createLineBorder(Color.GRAY, 2));
+                            }
+                        }
+                    } else {
+                        new GUIBattleScreen(player1, selected).setVisible(true);
+                        GUICharacterSelection.this.dispose();
+                    }
+                }
+            }
+        });
+
+        return card;
     }
 }

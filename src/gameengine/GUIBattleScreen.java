@@ -496,20 +496,15 @@ public class GUIBattleScreen extends JFrame {
         actionPanel.removeAll();
         int i = 0;
         for (Skills s : currentPlayer.getSkills()) {
-            JButton b = new JButton("<html><center><b>Skill " + (i+1) + "</b><br>" + s.getManaCost() + " MP</center></html>");
+            JButton b = UIFactory.createStyledButton("<html><center><b>" + s.getSkillName() + "</b><br>" + s.getManaCost() + " MP</center></html>", new Color(70, 70, 70), new Color(40, 40, 40));
             b.setPreferredSize(new Dimension(220, 120));
             b.setFont(new Font("Arial", Font.BOLD, 16));
-            b.setBorder(BorderFactory.createRaisedBevelBorder());
-            b.setFocusPainted(false);
-            b.setBackground(new Color(70, 70, 70));
-            b.setForeground(Color.WHITE);
             b.addActionListener(e -> playerTurn(s));
             actionPanel.add(b);
             i++;
         }
-        JButton rest = new JButton("REST");
+        JButton rest = UIFactory.createStyledButton("REST", new Color(0, 100, 0), new Color(0, 70, 0));
         rest.setPreferredSize(new Dimension(150, 120));
-        rest.setBackground(new Color(0, 100, 0)); rest.setForeground(Color.WHITE);
         rest.addActionListener(e -> {
             isBusy = true;
             if (turnTimer != null) turnTimer.stop();
@@ -525,9 +520,8 @@ public class GUIBattleScreen extends JFrame {
         });
         actionPanel.add(rest);
 
-        JButton exit = new JButton("EXIT");
+        JButton exit = UIFactory.createStyledButton("EXIT", new Color(150, 0, 0), new Color(100, 0, 0));
         exit.setPreferredSize(new Dimension(150, 120));
-        exit.setBackground(new Color(150, 0, 0)); exit.setForeground(Color.WHITE);
         exit.addActionListener(e -> {
             int result = JOptionPane.showConfirmDialog(
                 this,
