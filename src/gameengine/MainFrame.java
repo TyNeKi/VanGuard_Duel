@@ -3,6 +3,9 @@ package gameengine;
 import javax.swing.*;
 import gamemodel.Characters;
 import java.awt.*;
+import java.io.File;
+import java.util.Random;
+import javax.sound.sampled.*;
 
 public class MainFrame extends JFrame {
 
@@ -13,6 +16,8 @@ public class MainFrame extends JFrame {
     private GUICharacterSelection charSelectionScreen;
     private GUIMapSelection mapSelectionScreen;
     private GUIBattleScreen battleScreen;
+    private Clip battleMusicClip;
+
 
     public MainFrame() {
         setTitle("VanGuard Duel");
@@ -68,6 +73,7 @@ public class MainFrame extends JFrame {
 
     private void showBattleScreen(Characters p1, Characters p2, boolean isPvp, boolean isArcade, String map) {
         startScreen.stopMusic();
+        playRandomBattleMusic();
         if (battleScreen != null) {
             mainPanel.remove(battleScreen);
         }
@@ -85,6 +91,7 @@ public class MainFrame extends JFrame {
     }
 
     private void showStartScreen() {
+        stopBattleMusic();
         if (battleScreen != null) {
             mainPanel.remove(battleScreen);
             battleScreen = null;
@@ -99,6 +106,27 @@ public class MainFrame extends JFrame {
         }
         startScreen.startMusic();
         cardLayout.show(mainPanel, "start");
+    }
+
+    private void playRandomBattleMusic() {
+        try {
+            Random random = new Random();
+            int musicNumber = random.nextInt(3) + 1;
+            File audioFile = new File("src/resources/Battle" + musicNumber + "_music.wav");
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
+            battleMusicClip = AudioSystem.getClip();
+            battleMusicClip.open(audioStream);
+            battleMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void stopBattleMusic() {
+        if (battleMusicClip != null) {
+            battleMusicClip.stop();
+            battleMusicClip.close();
+        }
     }
 
     public static void main(String[] args) {
