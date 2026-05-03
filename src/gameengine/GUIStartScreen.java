@@ -3,38 +3,34 @@ package gameengine;
 import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.io.BufferedInputStream;
 import java.net.URL;
 
-public class GUIStartScreen extends JFrame {
+public class GUIStartScreen extends JPanel {
 
     private Clip musicClip;
     private FloatControl musicVolumeControl;
     private boolean isMuted = false;
     private float musicVolume = 0.5f;
 
+    // Action listeners for navigation, to be set by a controller
+    private ActionListener arcadeListener, vsCompListener, pvpListener;
+
     public GUIStartScreen() {
-        setTitle("VanGuard Duel - Main Menu");
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setResizable(false);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-        JPanel backgroundPanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                URL bgURL = getClass().getResource("/resources/backgroundSample.gif");
-                if (bgURL != null) {
-                    Image img = new ImageIcon(bgURL).getImage();
-                    g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
-                }
-            }
-        };
-
-        backgroundPanel.setLayout(new GridBagLayout());
-        setContentPane(backgroundPanel);
+        setLayout(new GridBagLayout());
         setupCenteredUI();
         playMusic();
+    }
+
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        URL bgURL = getClass().getResource("/resources/backgroundSample.gif");
+        if (bgURL != null) {
+            Image img = new ImageIcon(bgURL).getImage();
+            g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
+        }
     }
 
     private void playMusic() {
@@ -55,6 +51,19 @@ public class GUIStartScreen extends JFrame {
             musicClip.loop(Clip.LOOP_CONTINUOUSLY);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void stopMusic() {
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+        }
+    }
+
+    public void startMusic() {
+        if (musicClip != null && !musicClip.isRunning()) {
+            musicClip.setFramePosition(0);
+            musicClip.loop(Clip.LOOP_CONTINUOUSLY);
         }
     }
 
@@ -88,24 +97,21 @@ public class GUIStartScreen extends JFrame {
 
         JButton arcadeBtn = UIFactory.createStyledButton("Arcade Mode", new Color(255, 190, 0), new Color(150, 100, 0));
         arcadeBtn.addActionListener(e -> {
-            new GUICharacterSelection(false, true).setVisible(true);
-            dispose();
+            if (arcadeListener != null) arcadeListener.actionPerformed(e);
         });
         gbc.gridy = 1;
         add(arcadeBtn, gbc);
 
         JButton vsCompBtn = UIFactory.createStyledButton("Vs Computer", new Color(0, 191, 255), new Color(0, 100, 150));
         vsCompBtn.addActionListener(e -> {
-            new GUICharacterSelection(false, false).setVisible(true);
-            dispose();
+            if (vsCompListener != null) vsCompListener.actionPerformed(e);
         });
         gbc.gridy = 2;
         add(vsCompBtn, gbc);
 
         JButton pvpBtn = UIFactory.createStyledButton("Vs Player", new Color(50, 205, 50), new Color(20, 120, 20));
         pvpBtn.addActionListener(e -> {
-            new GUICharacterSelection(true, false).setVisible(true);
-            dispose();
+            if (pvpListener != null) pvpListener.actionPerformed(e);
         });
         gbc.gridy = 3;
         add(pvpBtn, gbc);
@@ -121,8 +127,15 @@ public class GUIStartScreen extends JFrame {
         add(exitBtn, gbc);
     }
 
+    // Methods to allow a controller to set the navigation actions
+    public void setOnArcade(ActionListener listener) { this.arcadeListener = listener; }
+    public void setOnVsComp(ActionListener listener) { this.vsCompListener = listener; }
+    public void setOnPvp(ActionListener listener) { this.pvpListener = listener; }
+
     private void showSettingsDialog() {
-        JDialog settingsDialog = new JDialog(this, "Settings", true);
+        // The dialog should be owned by the top-level window for correct behavior
+        JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        JDialog settingsDialog = new JDialog(topFrame, "Settings", true);
         settingsDialog.setUndecorated(true);
         settingsDialog.getRootPane().setBorder(BorderFactory.createLineBorder(new Color(100, 100, 100), 3));
         settingsDialog.getContentPane().setBackground(new Color(45, 45, 45));
@@ -203,11 +216,7 @@ public class GUIStartScreen extends JFrame {
 
         settingsDialog.add(panel);
         settingsDialog.pack();
-        settingsDialog.setLocationRelativeTo(this);
+        settingsDialog.setLocationRelativeTo(topFrame);
         settingsDialog.setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new GUIStartScreen().setVisible(true));
     }
 }

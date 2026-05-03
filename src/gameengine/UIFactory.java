@@ -19,9 +19,12 @@ public class UIFactory {
             protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                
                 int width = getWidth();
                 int height = getHeight();
                 int clip = 20;
+
+                // Define the button shape
                 GeneralPath path = new GeneralPath();
                 path.moveTo(clip, 0);
                 path.lineTo(width - clip, 0);
@@ -32,6 +35,8 @@ public class UIFactory {
                 path.lineTo(0, height - clip);
                 path.lineTo(0, clip);
                 path.closePath();
+
+                // Determine colors based on button state
                 Color c1 = baseColor;
                 Color c2 = darkColor;
                 if (getModel().isPressed()) {
@@ -41,24 +46,47 @@ public class UIFactory {
                     c1 = baseColor.brighter();
                     c2 = darkColor.brighter();
                 }
+
+                // Draw the main button gradient
                 g2.setPaint(new GradientPaint(0, 0, c1, 0, height, c2));
                 g2.fill(path);
+
+                // Draw a subtle inner shadow for a 3D effect
+                g2.setColor(new Color(0, 0, 0, 50));
+                g2.setStroke(new BasicStroke(3));
+                g2.draw(path);
+
+                // Draw the border
                 g2.setColor(darkColor.brighter());
                 g2.setStroke(new BasicStroke(2));
                 g2.draw(path);
+
+                // Draw the text with a shadow for better readability
                 FontMetrics fm = g2.getFontMetrics();
                 Rectangle textRect = new Rectangle(0, 0, width, height);
-                int x = (textRect.width - fm.stringWidth(getText())) / 2;
-                int y = (textRect.height - fm.getHeight()) / 2 + fm.getAscent();
-                g2.setColor(darkColor.darker());
-                g2.drawString(getText(), x, y + 1);
-                g2.setColor(Color.WHITE);
-                g2.drawString(getText(), x, y);
+                
+                // Use HTML to render multi-line text
+                JLabel label = new JLabel(getText());
+                label.setSize(textRect.width, textRect.height);
+                label.setFont(getFont());
+                label.setForeground(Color.BLACK); // Shadow color
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                label.setVerticalAlignment(SwingConstants.CENTER);
+                
+                // Paint the shadow
+                g2.translate(1, 1);
+                label.paint(g2);
+                
+                // Paint the main text
+                g2.translate(-1, -1);
+                label.setForeground(Color.WHITE);
+                label.paint(g2);
+
                 g2.dispose();
             }
         };
         btn.setPreferredSize(new Dimension(400, 75));
-        btn.setFont(new Font("SansSerif", Font.BOLD, 32));
+        btn.setFont(new Font("SansSerif", Font.BOLD, 22)); // Adjusted font size
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         btn.setContentAreaFilled(false);

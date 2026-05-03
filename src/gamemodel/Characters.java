@@ -1,17 +1,18 @@
 package gamemodel;
 
 public class Characters {
-    private String name, role;
+    private String name, role, gender;
     private int hp, maxHp, mana, maxMana, manaPerTurn;
     private double nextDamageReduction = 0.0, damageDealtMultiplier = 1.0;
     private Skills[] skills;
 
-    public Characters(String name, String role, int hp, int mana, int manaPerTurn, Skills[] skills) {
+    public Characters(String name, String role, int hp, int mana, int manaPerTurn, Skills[] skills, String gender) {
         this.name = name; this.role = role;
         this.hp = hp; this.maxHp = hp;
         this.mana = mana; this.maxMana = mana;
         this.manaPerTurn = manaPerTurn;
         this.skills = skills;
+        this.gender = gender;
     }
 
     public void updateHp(int val) {
@@ -24,6 +25,9 @@ public class Characters {
 
     public String getName() {
         return name;
+    }
+    public String getGender() {
+        return gender;
     }
     public int getHp() {
         return hp;
