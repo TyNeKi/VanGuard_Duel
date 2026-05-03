@@ -11,6 +11,7 @@ public class MainFrame extends JFrame {
 
     private GUIStartScreen startScreen;
     private GUICharacterSelection charSelectionScreen;
+    private GUIMapSelection mapSelectionScreen;
     private GUIBattleScreen battleScreen;
 
     public MainFrame() {
@@ -44,20 +45,39 @@ public class MainFrame extends JFrame {
         charSelectionScreen.setOnSelectionCompleteListener(e -> {
             Characters p1 = charSelectionScreen.getPlayer1();
             Characters p2 = charSelectionScreen.getPlayer2();
-            showBattleScreen(p1, p2, isPvp, isArcade);
+            if (isArcade) {
+                showBattleScreen(p1, p2, isPvp, isArcade, MapManager.getRandomMap());
+            } else {
+                showMapSelection(p1, p2, isPvp, isArcade);
+            }
         });
         mainPanel.add(charSelectionScreen, "charSelect");
         cardLayout.show(mainPanel, "charSelect");
     }
 
-    private void showBattleScreen(Characters p1, Characters p2, boolean isPvp, boolean isArcade) {
+    private void showMapSelection(Characters p1, Characters p2, boolean isPvp, boolean isArcade) {
+        mapSelectionScreen = new GUIMapSelection();
+        mapSelectionScreen.setOnBackListener(e -> cardLayout.show(mainPanel, "charSelect"));
+        mapSelectionScreen.setOnMapSelectedListener(e -> {
+            String selectedMap = mapSelectionScreen.getSelectedMap();
+            showBattleScreen(p1, p2, isPvp, isArcade, selectedMap);
+        });
+        mainPanel.add(mapSelectionScreen, "mapSelect");
+        cardLayout.show(mainPanel, "mapSelect");
+    }
+
+    private void showBattleScreen(Characters p1, Characters p2, boolean isPvp, boolean isArcade, String map) {
         startScreen.stopMusic();
+        if (battleScreen != null) {
+            mainPanel.remove(battleScreen);
+        }
+
         if (isArcade) {
-            battleScreen = new GUIBattleScreen(p1, true);
+            battleScreen = new GUIBattleScreen(p1, true, map);
         } else if (isPvp) {
-            battleScreen = new GUIBattleScreen(p1, p2);
+            battleScreen = new GUIBattleScreen(p1, p2, map);
         } else {
-            battleScreen = new GUIBattleScreen(p1);
+            battleScreen = new GUIBattleScreen(p1, map);
         }
         battleScreen.setOnExitListener(e -> showStartScreen());
         mainPanel.add(battleScreen, "battle");
@@ -65,6 +85,18 @@ public class MainFrame extends JFrame {
     }
 
     private void showStartScreen() {
+        if (battleScreen != null) {
+            mainPanel.remove(battleScreen);
+            battleScreen = null;
+        }
+        if (charSelectionScreen != null) {
+            mainPanel.remove(charSelectionScreen);
+            charSelectionScreen = null;
+        }
+        if (mapSelectionScreen != null) {
+            mainPanel.remove(mapSelectionScreen);
+            mapSelectionScreen = null;
+        }
         startScreen.startMusic();
         cardLayout.show(mainPanel, "start");
     }

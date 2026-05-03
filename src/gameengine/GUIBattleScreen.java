@@ -36,27 +36,30 @@ public class GUIBattleScreen extends JPanel {
     private JLabel currentTurnLabel;
     private ActionListener onExitListener;
     private Clip currentSkillSound;
+    private String map;
 
-    public GUIBattleScreen(Characters selected) {
+    public GUIBattleScreen(Characters selected, String map) {
         this.player1 = selected;
         this.currentPlayer = selected;
         this.opponent = generateAI();
         this.isPvP = false;
         this.isArcade = false;
+        this.map = map;
         initUI();
     }
 
-    public GUIBattleScreen(Characters player1, Characters player2) {
+    public GUIBattleScreen(Characters player1, Characters player2, String map) {
         this.player1 = player1;
         this.player2 = player2;
         this.currentPlayer = player1;
         this.opponent = player2;
         this.isPvP = true;
         this.isArcade = false;
+        this.map = map;
         initUI();
     }
 
-    public GUIBattleScreen(Characters selected, boolean isArcade) {
+    public GUIBattleScreen(Characters selected, boolean isArcade, String map) {
         this.player1 = selected;
         this.currentPlayer = selected;
         this.isPvP = false;
@@ -64,6 +67,7 @@ public class GUIBattleScreen extends JPanel {
         this.arcadeOpponents = buildArcadeOpponents(selected.getName());
         this.currentArcadeIndex = 0;
         this.arcadeDefeats = 0;
+        this.map = map;
         selectNextArcadeOpponent();
         initUI();
     }
@@ -114,7 +118,7 @@ public class GUIBattleScreen extends JPanel {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                URL bgURL = getClass().getResource("/resources/backgroundSample.gif");
+                URL bgURL = getClass().getResource("/resources/" + map);
                 if (bgURL != null) {
                     Image img = new ImageIcon(bgURL).getImage();
                     g.drawImage(img, 0, 0, getWidth(), getHeight(), this);
