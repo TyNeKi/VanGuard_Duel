@@ -12,6 +12,10 @@ import java.net.URL;
 public class UIFactory {
 
     public static float sfxVolume = 0.5f;
+    public static float musicVolume = 0.5f;
+    public static boolean isMuted = false;
+    private static Clip musicClip;
+    private static FloatControl musicVolumeControl;
 
     public static JButton createStyledButton(String text, Color baseColor, Color darkColor) {
         JButton btn = new JButton(text) {
@@ -129,5 +133,47 @@ public class UIFactory {
 
     public static void setSfxVolume(float volume) {
         sfxVolume = volume;
+    }
+
+    public static void playMusic(String musicFile) {
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+        }
+        try {
+            URL url = UIFactory.class.getResource(musicFile);
+            if (url == null) {
+                System.err.println("Couldn't find file: " + musicFile);
+                return;
+            }
+            AudioInputStream audioStream = AudioSystem.getAudioInputStream(new BufferedInputStream(url.openStream()));
+            musicClip = AudioSystem.getClip();
+            musicClip.open(audioStream);
+
+            if (musicClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                musicVolumeControl = (FloatControl) musicClip.getControl(FloatControl.Type.MASTER_GAIN);
+                setMusicVolume(musicVolume);
+            }
+            musicClip.loop(Clip.LOOP_CONTINUOUSLY);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void stopMusic() {
+        if (musicClip != null && musicClip.isRunning()) {
+            musicClip.stop();
+        }
+    }
+
+    public static void setMusicVolume(float volume) {
+        musicVolume = volume;
+        if (musicVolumeControl != null) {
+            if (isMuted) {
+                musicVolumeControl.setValue(musicVolumeControl.getMinimum());
+            } else {
+                float dB = (float) (Math.log(volume == 0.0 ? 0.0001 : volume) / Math.log(10.0) * 20.0);
+                musicVolumeControl.setValue(dB);
+            }
+        }
     }
 }

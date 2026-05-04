@@ -9,14 +9,13 @@ import javax.sound.sampled.*;
 
 public class MainFrame extends JFrame {
 
-    private CardLayout cardLayout;
-    private JPanel mainPanel;
+    private final CardLayout cardLayout;
+    private final JPanel mainPanel;
 
-    private GUIStartScreen startScreen;
+    private final GUIStartScreen startScreen;
     private GUICharacterSelection charSelectionScreen;
     private GUIMapSelection mapSelectionScreen;
     private GUIBattleScreen battleScreen;
-    private Clip battleMusicClip;
 
 
     public MainFrame() {
@@ -44,7 +43,7 @@ public class MainFrame extends JFrame {
     }
 
     private void showCharSelection(boolean isPvp, boolean isArcade) {
-        startScreen.stopMusic();
+        UIFactory.stopMusic();
         charSelectionScreen = new GUICharacterSelection(isPvp, isArcade);
         charSelectionScreen.setOnBackListener(e -> showStartScreen());
         charSelectionScreen.setOnSelectionCompleteListener(e -> {
@@ -72,7 +71,7 @@ public class MainFrame extends JFrame {
     }
 
     private void showBattleScreen(Characters p1, Characters p2, boolean isPvp, boolean isArcade, String map) {
-        startScreen.stopMusic();
+        UIFactory.stopMusic();
         playRandomBattleMusic();
         if (battleScreen != null) {
             mainPanel.remove(battleScreen);
@@ -91,7 +90,7 @@ public class MainFrame extends JFrame {
     }
 
     private void showStartScreen() {
-        stopBattleMusic();
+        UIFactory.stopMusic();
         if (battleScreen != null) {
             mainPanel.remove(battleScreen);
             battleScreen = null;
@@ -104,29 +103,14 @@ public class MainFrame extends JFrame {
             mainPanel.remove(mapSelectionScreen);
             mapSelectionScreen = null;
         }
-        startScreen.startMusic();
+        UIFactory.playMusic("/resources/Background menu music.wav");
         cardLayout.show(mainPanel, "start");
     }
 
     private void playRandomBattleMusic() {
-        try {
-            Random random = new Random();
-            int musicNumber = random.nextInt(3) + 1;
-            File audioFile = new File("src/resources/Battle" + musicNumber + "_music.wav");
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(audioFile);
-            battleMusicClip = AudioSystem.getClip();
-            battleMusicClip.open(audioStream);
-            battleMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void stopBattleMusic() {
-        if (battleMusicClip != null) {
-            battleMusicClip.stop();
-            battleMusicClip.close();
-        }
+        Random random = new Random();
+        int musicNumber = random.nextInt(3) + 1;
+        UIFactory.playMusic("/resources/Battle" + musicNumber + "_music.wav");
     }
 
     public static void main(String[] args) {
