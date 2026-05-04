@@ -16,6 +16,7 @@ public class MainFrame extends JFrame {
     private GUICharacterSelection charSelectionScreen;
     private GUIMapSelection mapSelectionScreen;
     private GUIBattleScreen battleScreen;
+    private GUILeaderboardScreen leaderboardScreen;
 
 
     public MainFrame() {
@@ -34,6 +35,7 @@ public class MainFrame extends JFrame {
         startScreen.setOnArcade(e -> showCharSelection(false, true));
         startScreen.setOnVsComp(e -> showCharSelection(false, false));
         startScreen.setOnPvp(e -> showCharSelection(true, false));
+        startScreen.setOnLeaderboard(e -> showLeaderboardScreen());
 
         // --- Add panels to the main card layout ---
         mainPanel.add(startScreen, "start");
@@ -89,6 +91,13 @@ public class MainFrame extends JFrame {
         cardLayout.show(mainPanel, "battle");
     }
 
+    private void showLeaderboardScreen() {
+        leaderboardScreen = new GUILeaderboardScreen();
+        leaderboardScreen.setOnBackListener(e -> showStartScreen());
+        mainPanel.add(leaderboardScreen, "leaderboard");
+        cardLayout.show(mainPanel, "leaderboard");
+    }
+
     private void showStartScreen() {
         UIFactory.stopMusic();
         if (battleScreen != null) {
@@ -102,6 +111,10 @@ public class MainFrame extends JFrame {
         if (mapSelectionScreen != null) {
             mainPanel.remove(mapSelectionScreen);
             mapSelectionScreen = null;
+        }
+        if (leaderboardScreen != null) {
+            mainPanel.remove(leaderboardScreen);
+            leaderboardScreen = null;
         }
         UIFactory.playMusic("/resources/Background menu music.wav");
         cardLayout.show(mainPanel, "start");

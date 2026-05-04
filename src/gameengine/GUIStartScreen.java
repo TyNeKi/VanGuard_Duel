@@ -8,7 +8,7 @@ import java.net.URL;
 public class GUIStartScreen extends JPanel {
 
     // Action listeners for navigation, to be set by a controller
-    private ActionListener arcadeListener, vsCompListener, pvpListener;
+    private ActionListener arcadeListener, vsCompListener, pvpListener, leaderboardListener;
 
     public GUIStartScreen() {
         setLayout(new GridBagLayout());
@@ -63,14 +63,21 @@ public class GUIStartScreen extends JPanel {
         gbc.gridy = 3;
         add(pvpBtn, gbc);
 
+        JButton leaderboardBtn = UIFactory.createStyledButton("Leaderboard", new Color(128, 128, 128), new Color(80, 80, 80));
+        leaderboardBtn.addActionListener(e -> {
+            if (leaderboardListener != null) leaderboardListener.actionPerformed(e);
+        });
+        gbc.gridy = 4;
+        add(leaderboardBtn, gbc);
+
         JButton settingsBtn = UIFactory.createStyledButton("Settings", new Color(128, 128, 128), new Color(80, 80, 80));
         settingsBtn.addActionListener(e -> showSettingsDialog());
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         add(settingsBtn, gbc);
 
         JButton exitBtn = UIFactory.createStyledButton("Exit Game", new Color(255, 80, 80), new Color(150, 20, 20));
         exitBtn.addActionListener(e -> System.exit(0));
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         add(exitBtn, gbc);
     }
 
@@ -78,6 +85,7 @@ public class GUIStartScreen extends JPanel {
     public void setOnArcade(ActionListener listener) { this.arcadeListener = listener; }
     public void setOnVsComp(ActionListener listener) { this.vsCompListener = listener; }
     public void setOnPvp(ActionListener listener) { this.pvpListener = listener; }
+    public void setOnLeaderboard(ActionListener listener) { this.leaderboardListener = listener; }
 
     private void showSettingsDialog() {
         // The dialog should be owned by the top-level window for correct behavior

@@ -695,6 +695,13 @@ public class GUIBattleScreen extends JPanel {
     }
 
     private void finalizeMatch(String msg) {
+        if (isArcade && (msg.contains("ARCADE COMPLETE") || msg.contains("GAME OVER"))) {
+            String name = JOptionPane.showInputDialog(this, "Enter your name for the leaderboard:");
+            if (name != null && !name.trim().isEmpty()) {
+                LeaderboardManager.addScore(name, arcadeDefeats);
+            }
+        }
+
         try {
             StyledDocument doc = battleLog.getStyledDocument();
             SimpleAttributeSet endStyle = new SimpleAttributeSet();
