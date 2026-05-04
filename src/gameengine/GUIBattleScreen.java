@@ -1,6 +1,7 @@
 package gameengine;
 
 import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.swing.*;
 import javax.swing.text.StyledDocument;
 import javax.swing.text.SimpleAttributeSet;
@@ -11,6 +12,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.net.URL;
 import Logic.BattleLogic;
@@ -38,6 +40,7 @@ public class GUIBattleScreen extends JPanel {
     private Clip currentSkillSound;
     private Clip walkSound;
     private String map;
+    private Clip battleMusic;
 
     public GUIBattleScreen(Characters selected, String map) {
         this.player1 = selected;
@@ -47,6 +50,7 @@ public class GUIBattleScreen extends JPanel {
         this.isArcade = false;
         this.map = map;
         initUI();
+        playBattleMusic();
     }
 
     public GUIBattleScreen(Characters player1, Characters player2, String map) {
@@ -58,6 +62,7 @@ public class GUIBattleScreen extends JPanel {
         this.isArcade = false;
         this.map = map;
         initUI();
+        playBattleMusic();
     }
 
     public GUIBattleScreen(Characters selected, boolean isArcade, String map) {
@@ -71,6 +76,18 @@ public class GUIBattleScreen extends JPanel {
         this.map = map;
         selectNextArcadeOpponent();
         initUI();
+    }
+
+    public void stopMusic() {
+        if (battleMusic != null) {
+            battleMusic.stop();
+        }
+    }
+
+    private void playBattleMusic() {
+        stopMusic();
+        int battleNumber = rand.nextInt(3) + 1;
+        battleMusic = UIFactory.playSound("/resources/Battle" + battleNumber + "_music.wav", true);
     }
 
     private void initUI() {
@@ -239,7 +256,13 @@ public class GUIBattleScreen extends JPanel {
         JSlider musicVolumeSlider = new JSlider(0, 100, (int) (UIFactory.musicVolume * 100));
         musicVolumeSlider.setOpaque(false);
         musicVolumeSlider.setPreferredSize(new Dimension(200, 20));
-        musicVolumeSlider.addChangeListener(e -> UIFactory.setMusicVolume(((JSlider) e.getSource()).getValue() / 100f));
+        musicVolumeSlider.addChangeListener(e -> {
+            UIFactory.setMusicVolume(((JSlider) e.getSource()).getValue() / 100f);
+            if (battleMusic != null && battleMusic.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                FloatControl control = (FloatControl) battleMusic.getControl(FloatControl.Type.MASTER_GAIN);
+                UIFactory.updateVolume(control, UIFactory.musicVolume);
+            }
+        });
         gbc.gridx = 1;
         panel.add(musicVolumeSlider, gbc);
 
@@ -266,7 +289,10 @@ public class GUIBattleScreen extends JPanel {
         muteCheckbox.setSelected(UIFactory.isMuted);
         muteCheckbox.addActionListener(e -> {
             UIFactory.isMuted = muteCheckbox.isSelected();
-            UIFactory.setMusicVolume(UIFactory.musicVolume); // Re-apply volume to handle mute
+            if (battleMusic != null && battleMusic.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                FloatControl control = (FloatControl) battleMusic.getControl(FloatControl.Type.MASTER_GAIN);
+                UIFactory.updateVolume(control, UIFactory.musicVolume);
+            }
         });
         gbc.gridy = 3;
         gbc.gridx = 0;
@@ -327,11 +353,7 @@ public class GUIBattleScreen extends JPanel {
             Point target = (sprite == pSprite) ? new Point(eSprite.getX() - 80, origin.y) : new Point(pSprite.getX() + 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
-                if (attackerName.equals("Tyron")) {
-                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
-                } else if (attackerName.equals("Lance")) {
-                    currentSkillSound = UIFactory.playSound("/resources/Lance_skill" + finalSkillIdx + "SoundEffect.wav");
-                }
+                playSkillSound(attackerName, finalSkillIdx);
                 loadGif(sprite, attackerName, skillAction);
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -358,9 +380,9 @@ public class GUIBattleScreen extends JPanel {
                 new Timer(1200, e -> {
                     loadGif(opponentSprite, defenderName, "gothit");
                     if (opponent.getGender().equals("female")) {
-                        UIFactory.playSound("/resources/female_gothit.wav");
+                        UIFactory.playSound("/resources/female_gothit.wav", false);
                     } else {
-                        UIFactory.playSound("/resources/male_gothit.wav");
+                        UIFactory.playSound("/resources/male_gothit.wav", false);
                     }
                     new Timer(500, eHit -> {
                         loadGif(opponentSprite, defenderName, "idle");
@@ -382,11 +404,7 @@ public class GUIBattleScreen extends JPanel {
             Point target = new Point(eSprite.getX() - 80, origin.y);
 
             moveSprite(sprite, attackerName, target, () -> {
-                if (attackerName.equals("Tyron")) {
-                    currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + finalSkillIdx + "SoundEffect.wav");
-                } else if (attackerName.equals("Lance")) {
-                    currentSkillSound = UIFactory.playSound("/resources/Lance_skill" + finalSkillIdx + "SoundEffect.wav");
-                }
+                playSkillSound(attackerName, finalSkillIdx);
                 loadGif(sprite, attackerName, skillAction); // Play specific skill
                 currentPlayer.updateMana(-s.getManaCost());
                 int dmg = BattleLogic.calculateDamage(currentPlayer, opponent, s);
@@ -413,9 +431,9 @@ public class GUIBattleScreen extends JPanel {
                 new Timer(1200, e -> {
                     loadGif(opponentSprite, defenderName, "gothit");
                     if (opponent.getGender().equals("female")) {
-                        UIFactory.playSound("/resources/female_gothit.wav");
+                        UIFactory.playSound("/resources/female_gothit.wav", false);
                     } else {
-                        UIFactory.playSound("/resources/male_gothit.wav");
+                        UIFactory.playSound("/resources/male_gothit.wav", false);
                     }
                     // Load idle after hit animation
                     new Timer(500, eHit -> {
@@ -455,11 +473,7 @@ public class GUIBattleScreen extends JPanel {
                 Point target = new Point(pSprite.getX() + 80, origin.y);
 
                 moveSprite(eSprite, opponent.getName(), target, () -> {
-                    if (opponent.getName().equals("Tyron")) {
-                        currentSkillSound = UIFactory.playSound("/resources/Tyron_skill" + (pick + 1) + "SoundEffect.wav");
-                    } else if (opponent.getName().equals("Lance")) {
-                        currentSkillSound = UIFactory.playSound("/resources/Lance_skill" + (pick + 1) + "SoundEffect.wav");
-                    }
+                    playSkillSound(opponent.getName(), pick + 1);
                     loadGif(eSprite, opponent.getName(), skillAction);
                     opponent.updateMana(-s.getManaCost());
                     int dmg = BattleLogic.calculateDamage(opponent, currentPlayer, s);
@@ -485,9 +499,9 @@ public class GUIBattleScreen extends JPanel {
                     new Timer(1200, e2 -> {
                         loadGif(pSprite, currentPlayer.getName(), "gothit");
                         if (currentPlayer.getGender().equals("female")) {
-                            UIFactory.playSound("/resources/female_gothit.wav");
+                            UIFactory.playSound("/resources/female_gothit.wav", false);
                         } else {
-                            UIFactory.playSound("/resources/male_gothit.wav");
+                            UIFactory.playSound("/resources/male_gothit.wav", false);
                         }
                         // Load idle after hit animation
                         new Timer(500, eHit -> {
@@ -522,7 +536,7 @@ public class GUIBattleScreen extends JPanel {
     }
 
     private void moveSprite(JLabel sprite, String name, Point dest, Runnable onDone) {
-        walkSound = UIFactory.playSound("/resources/walk_sound.wav");
+        walkSound = UIFactory.playSound("/resources/walk_sound.wav", false);
         if (!loadGifIfExists(sprite, name, "walk")) {
             loadGif(sprite, name, "idle");
         }
@@ -647,6 +661,7 @@ public class GUIBattleScreen extends JPanel {
                 JOptionPane.WARNING_MESSAGE
             );
             if (result == JOptionPane.YES_OPTION) {
+                stopMusic();
                 if (onExitListener != null) {
                     onExitListener.actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, "exit"));
                 }
@@ -695,6 +710,7 @@ public class GUIBattleScreen extends JPanel {
     }
 
     private void finalizeMatch(String msg) {
+        stopMusic();
         if (isArcade && (msg.contains("ARCADE COMPLETE") || msg.contains("GAME OVER"))) {
             String name = JOptionPane.showInputDialog(this, "Enter your name for the leaderboard:");
             if (name != null && !name.trim().isEmpty()) {
@@ -830,6 +846,17 @@ public class GUIBattleScreen extends JPanel {
         return false;
     }
 
+    private void playSkillSound(String characterName, int skillIndex) {
+        List<String> charactersWithSound = Arrays.asList(
+                "Tyron", "Lance", "Raze", "Clark", "Marie", "Adrian", "Alyana", "Katarina"
+        );
+
+        if (charactersWithSound.contains(characterName)) {
+            String soundFile = "/resources/" + characterName + "_skill" + skillIndex + "SoundEffect.wav";
+            currentSkillSound = UIFactory.playSound(soundFile, false);
+        }
+    }
+
     private void toggleButtons(boolean s) { for (Component c : actionPanel.getComponents()) c.setEnabled(s); }
 
     private String getTurnLabelText() {
@@ -866,6 +893,14 @@ public class GUIBattleScreen extends JPanel {
             }
             if (currentTurnLabel != null) {
                 currentTurnLabel.setText(getTurnLabelText());
+            }
+            if (isArcade) {
+                int backgroundNumber = rand.nextInt(5) + 1;
+                map = "Battle" + backgroundNumber + "_background.png";
+                playBattleMusic();
+                if (arena != null) {
+                    arena.repaint();
+                }
             }
         }
     }

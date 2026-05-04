@@ -14,8 +14,7 @@ public class UIFactory {
     public static float sfxVolume = 0.5f;
     public static float musicVolume = 0.5f;
     public static boolean isMuted = false;
-    private static Clip musicClip;
-    private static FloatControl musicVolumeControl;
+    private static Clip currentMusicClip;
 
     public static JButton createStyledButton(String text, Color baseColor, Color darkColor) {
         JButton btn = new JButton(text) {
@@ -98,17 +97,17 @@ public class UIFactory {
         btn.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                playSound("/resources/button_hover.wav");
+                playSound("/resources/button_hover.wav", false);
             }
             @Override
             public void mousePressed(MouseEvent e) {
-                playSound("/resources/button_click.wav");
+                playSound("/resources/button_click.wav", false);
             }
         });
         return btn;
     }
 
-    public static Clip playSound(String soundFile) {
+    public static Clip playSound(String soundFile, boolean isMusic) {
         try {
             URL url = UIFactory.class.getResource(soundFile);
             if (url == null) {
@@ -118,12 +117,27 @@ public class UIFactory {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(new BufferedInputStream(url.openStream()));
             Clip soundClip = AudioSystem.getClip();
             soundClip.open(audioStream);
-            if (soundClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                FloatControl sfxVolumeControl = (FloatControl) soundClip.getControl(FloatControl.Type.MASTER_GAIN);
-                float dB = (float) (Math.log(sfxVolume == 0.0 ? 0.0001 : sfxVolume) / Math.log(10.0) * 20.0);
-                sfxVolumeControl.setValue(dB);
+            
+            if (isMusic) {
+                if (currentMusicClip != null && currentMusicClip.isRunning()) {
+                    currentMusicClip.stop();
+                }
+                currentMusicClip = soundClip;
+                if (currentMusicClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl control = (FloatControl) currentMusicClip.getControl(FloatControl.Type.MASTER_GAIN);
+                    updateVolume(control, musicVolume);
+                }
+                currentMusicClip.loop(Clip.LOOP_CONTINUOUSLY);
+            } else {
+                if (soundClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+                    FloatControl control = (FloatControl) soundClip.getControl(FloatControl.Type.MASTER_GAIN);
+                    // SFX are not muted by the global mute flag
+                    float dB = (float) (Math.log(sfxVolume == 0.0 ? 0.0001 : sfxVolume) / Math.log(10.0) * 20.0);
+                    control.setValue(dB);
+                }
+                soundClip.start();
             }
-            soundClip.start();
+            
             return soundClip;
         } catch (Exception e) {
             e.printStackTrace();
@@ -132,48 +146,31 @@ public class UIFactory {
     }
 
     public static void setSfxVolume(float volume) {
-        sfxVolume = volume;
-    }
-
-    public static void playMusic(String musicFile) {
-        if (musicClip != null && musicClip.isRunning()) {
-            musicClip.stop();
-        }
-        try {
-            URL url = UIFactory.class.getResource(musicFile);
-            if (url == null) {
-                System.err.println("Couldn't find file: " + musicFile);
-                return;
-            }
-            AudioInputStream audioStream = AudioSystem.getAudioInputStream(new BufferedInputStream(url.openStream()));
-            musicClip = AudioSystem.getClip();
-            musicClip.open(audioStream);
-
-            if (musicClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
-                musicVolumeControl = (FloatControl) musicClip.getControl(FloatControl.Type.MASTER_GAIN);
-                setMusicVolume(musicVolume);
-            }
-            musicClip.loop(Clip.LOOP_CONTINUOUSLY);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void stopMusic() {
-        if (musicClip != null && musicClip.isRunning()) {
-            musicClip.stop();
-        }
+        sfxVolume = Math.max(0.0f, Math.min(1.0f, volume));
     }
 
     public static void setMusicVolume(float volume) {
-        musicVolume = volume;
-        if (musicVolumeControl != null) {
-            if (isMuted) {
-                musicVolumeControl.setValue(musicVolumeControl.getMinimum());
-            } else {
-                float dB = (float) (Math.log(volume == 0.0 ? 0.0001 : volume) / Math.log(10.0) * 20.0);
-                musicVolumeControl.setValue(dB);
-            }
+        musicVolume = Math.max(0.0f, Math.min(1.0f, volume));
+        if (currentMusicClip != null && currentMusicClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl control = (FloatControl) currentMusicClip.getControl(FloatControl.Type.MASTER_GAIN);
+            updateVolume(control, musicVolume);
+        }
+    }
+    
+    public static void setMuted(boolean muted) {
+        isMuted = muted;
+        if (currentMusicClip != null && currentMusicClip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+            FloatControl control = (FloatControl) currentMusicClip.getControl(FloatControl.Type.MASTER_GAIN);
+            updateVolume(control, musicVolume);
+        }
+    }
+
+    public static void updateVolume(FloatControl control, float volume) {
+        if (isMuted) {
+            control.setValue(control.getMinimum());
+        } else {
+            float dB = (float) (Math.log(volume == 0.0 ? 0.0001 : volume) / Math.log(10.0) * 20.0);
+            control.setValue(dB);
         }
     }
 }

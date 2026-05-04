@@ -96,7 +96,7 @@ public class GUICharacterSelection extends JPanel {
             public void mouseClicked(MouseEvent e) {
                 if (!card.isEnabled() || onSelectionCompleteListener == null) return;
                 
-                UIFactory.playSound("/resources/button_click.wav");
+                UIFactory.playSound("/resources/button_click.wav", false);
                 Characters selected = CharacterRegistry.getCharacter(name);
 
                 if (isArcade || !isPvP) {
