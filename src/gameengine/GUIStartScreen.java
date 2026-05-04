@@ -1,5 +1,7 @@
 package gameengine;
 
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.FloatControl;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
@@ -7,13 +9,11 @@ import java.net.URL;
 
 public class GUIStartScreen extends JPanel {
 
-    // Action listeners for navigation, to be set by a controller
-    private ActionListener arcadeListener, vsCompListener, pvpListener;
+    private ActionListener arcadeListener, vsCompListener, pvpListener, leaderboardListener;
 
     public GUIStartScreen() {
         setLayout(new GridBagLayout());
         setupCenteredUI();
-        UIFactory.playMusic("/resources/Background menu music.wav");
     }
 
     @Override
@@ -63,24 +63,30 @@ public class GUIStartScreen extends JPanel {
         gbc.gridy = 3;
         add(pvpBtn, gbc);
 
+        JButton leaderboardBtn = UIFactory.createStyledButton("Leaderboard", new Color(128, 128, 128), new Color(80, 80, 80));
+        leaderboardBtn.addActionListener(e -> {
+            if (leaderboardListener != null) leaderboardListener.actionPerformed(e);
+        });
+        gbc.gridy = 4;
+        add(leaderboardBtn, gbc);
+
         JButton settingsBtn = UIFactory.createStyledButton("Settings", new Color(128, 128, 128), new Color(80, 80, 80));
         settingsBtn.addActionListener(e -> showSettingsDialog());
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         add(settingsBtn, gbc);
 
         JButton exitBtn = UIFactory.createStyledButton("Exit Game", new Color(255, 80, 80), new Color(150, 20, 20));
         exitBtn.addActionListener(e -> System.exit(0));
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         add(exitBtn, gbc);
     }
 
-    // Methods to allow a controller to set the navigation actions
     public void setOnArcade(ActionListener listener) { this.arcadeListener = listener; }
     public void setOnVsComp(ActionListener listener) { this.vsCompListener = listener; }
     public void setOnPvp(ActionListener listener) { this.pvpListener = listener; }
+    public void setOnLeaderboard(ActionListener listener) { this.leaderboardListener = listener; }
 
     private void showSettingsDialog() {
-        // The dialog should be owned by the top-level window for correct behavior
         JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
         JDialog settingsDialog = new JDialog(topFrame, "Settings", true);
         settingsDialog.setUndecorated(true);
@@ -103,7 +109,6 @@ public class GUIStartScreen extends JPanel {
         gbc.gridwidth = 2;
         panel.add(titleLabel, gbc);
 
-        // Music Volume
         JLabel musicVolumeLabel = new JLabel("Music Volume:");
         musicVolumeLabel.setForeground(Color.WHITE);
         musicVolumeLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
@@ -114,11 +119,12 @@ public class GUIStartScreen extends JPanel {
         JSlider musicVolumeSlider = new JSlider(0, 100, (int) (UIFactory.musicVolume * 100));
         musicVolumeSlider.setOpaque(false);
         musicVolumeSlider.setPreferredSize(new Dimension(200, 20));
-        musicVolumeSlider.addChangeListener(e -> UIFactory.setMusicVolume(((JSlider) e.getSource()).getValue() / 100f));
+        musicVolumeSlider.addChangeListener(e -> {
+            UIFactory.setMusicVolume(((JSlider) e.getSource()).getValue() / 100f);
+        });
         gbc.gridx = 1;
         panel.add(musicVolumeSlider, gbc);
 
-        // SFX Volume
         JLabel sfxVolumeLabel = new JLabel("SFX Volume:");
         sfxVolumeLabel.setForeground(Color.WHITE);
         sfxVolumeLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
@@ -133,15 +139,13 @@ public class GUIStartScreen extends JPanel {
         gbc.gridx = 1;
         panel.add(sfxVolumeSlider, gbc);
 
-        // Mute Checkbox
         JCheckBox muteCheckbox = new JCheckBox("Mute Music");
         muteCheckbox.setForeground(Color.WHITE);
         muteCheckbox.setFont(new Font("SansSerif", Font.PLAIN, 16));
         muteCheckbox.setOpaque(false);
         muteCheckbox.setSelected(UIFactory.isMuted);
         muteCheckbox.addActionListener(e -> {
-            UIFactory.isMuted = muteCheckbox.isSelected();
-            UIFactory.setMusicVolume(UIFactory.musicVolume); // Re-apply volume to handle mute
+            UIFactory.setMuted(muteCheckbox.isSelected());
         });
         gbc.gridy = 3;
         gbc.gridx = 0;
@@ -149,7 +153,6 @@ public class GUIStartScreen extends JPanel {
         gbc.anchor = GridBagConstraints.CENTER;
         panel.add(muteCheckbox, gbc);
 
-        // Close Button
         JButton closeButton = new JButton("Go Back");
         closeButton.setFont(new Font("SansSerif", Font.BOLD, 16));
         closeButton.setBackground(new Color(200, 50, 50));
